@@ -1,0 +1,40 @@
+{
+  "name": "pubcid",
+  "version": "1.1.0",
+  "description": "Publisher Common ID",
+  "scripts": {
+    "lint": "eslint src/**/*.js",
+    "start": "webpack-dev-server --mode=development",
+    "build": "webpack --mode=production",
+    "test": "npm run lint && karma start --single-run",
+    "test-bamboo": "npm run lint && karma start --single-run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pycnvr/pubcid.js.git"
+  },
+  "keywords": [],
+  "author": "Paul Yang <pyang@conversantmedia.com>",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/plugin-transform-object-assign": "^7.2.0",
+    "@babel/preset-env": "^7.3.1",
+    "babel-loader": "^8.0.5",
+    "eslint": "^5.16.0",
+    "html-webpack-exclude-assets-plugin": "0.0.7",
+    "html-webpack-plugin": "^3.2.0",
+    "jasmine-core": "^3.3.0",
+    "karma": "^4.0.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-jasmine": "^2.0.1",
+    "karma-spec-reporter": "0.0.32",
+    "karma-webpack": "^3.0.5",
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.1",
+    "webpack-dev-server": "^3.1.14"
+  },
+  "dependencies": {},
+  "main": "/src/pubcid.js",
+  "private": true
+}
