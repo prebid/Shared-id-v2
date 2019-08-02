@@ -1,4 +1,5 @@
 import PubcidHandler from './pubcidHandler';
+import {uuid4} from "./utils";
 
 /**
  * Create a window level PublisherCommonId object that sets and returns pubcid (aka fpc).
@@ -37,6 +38,10 @@ export function setupPubcid(w, d, options = {}) {
     PublisherCommonId.deleteId = function() {
         _handler.deletePubcid();
         _cachedId = '';
+    };
+
+    PublisherCommonId.generateId = function() {
+        return uuid4();
     };
 
     if (options.autoinit === undefined || options.autoinit)
