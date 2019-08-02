@@ -36,4 +36,10 @@ describe('Standalone pubcid default', ()=>{
         const pubcid = window.PublisherCommonId.getId();
         expect(pubcid).toEqual('');
    });
+
+    it('generate id', ()=> {
+        setupPubcid(window, document, {});
+        const pubcid = window.PublisherCommonId.generateId();
+        expect(pubcid).toMatch(uuidPattern);
+    });
 });

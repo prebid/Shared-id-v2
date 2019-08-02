@@ -1,9 +1,6 @@
 const webpackConfig = require('./webpack.config')();
 webpackConfig.mode = 'development';
 
-// Get around the dreprecation warning in karma-webpack@3.0.5
-process.noDeprecation = true;
-
 module.exports = (config) => {
     config.set({
         frameworks: ['jasmine'],
