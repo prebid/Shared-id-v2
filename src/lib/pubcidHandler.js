@@ -1,5 +1,5 @@
 import {getCookie, isCookieSupported, setCookie, delCookie} from './cookieUtils';
-import {uuid4, addQueryParam, firePixel} from './utils';
+import {uuid4, addQueryParam, firePixel, copyOptions} from './utils';
 import {getStorageItem, isStorageSupported, setStorageItem, removeStorageItem} from './storageUtils';
 
 const COOKIE = 'cookie';
@@ -22,7 +22,7 @@ export default class PubcidHandler {
             pixelUrl: ''
         };
 
-        Object.assign(this.config, options);
+        copyOptions(this.config, options);
 
         this.typeEnabled = null;
 
