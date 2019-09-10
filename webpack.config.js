@@ -3,6 +3,7 @@
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackExcludeAssetsPlugin = require('html-webpack-exclude-assets-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = (env = {}, args = {}) => {
     console.log('Mode is ' + args.mode);
@@ -11,7 +12,13 @@ module.exports = (env = {}, args = {}) => {
 
     let config = {
         entry: {
-            'pubcid.min': './src/pubcid.js'
+            'pubcid.min': './src/pubcid.js',
+            'index':'./src/index.js'
+        },
+        output: {
+            filename: '[name].js',
+            path: __dirname + '/dist',
+            libraryTarget: 'umd'
         }
         ,
         module: {
@@ -35,6 +42,14 @@ module.exports = (env = {}, args = {}) => {
         ],
         devServer: {
             host: 'mockpub'
+        },
+        optimization: {
+            minimize: true,
+            minimizer: [
+                new TerserPlugin({
+                    include: /\.min\.js$/
+                }),
+            ]
         }
     };
 

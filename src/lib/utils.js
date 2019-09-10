@@ -84,3 +84,20 @@ export function firePixel(url) {
     img.style.display = 'none';
     img.src = url;
 }
+
+/**
+ * Copy overriding values from src to dst.  Skip src properties that have undefined values,
+ * or didn't exist in dst.
+ * @param dst Destination
+ * @param src Source
+ */
+export function copyOptions(dst, src) {
+    if (dst && src) {
+        Object.keys(src).forEach((key) => {
+            const val = src[key];
+            if (typeof val !== 'undefined' && dst.hasOwnProperty(key)) {
+                dst[key] = val;
+            }
+        });
+    }
+}

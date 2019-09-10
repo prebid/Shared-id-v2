@@ -1,3 +1,5 @@
+import {copyOptions} from "./utils";
+
 export const GET_CONSENT_DATA = "getConsentData";
 export const GET_VENDOR_CONSENTS = "getVendorConsents";
 
@@ -103,7 +105,7 @@ export default class ConsentHandler {
             alwaysPing: true
         };
 
-        Object.assign(this.config, options);
+        copyOptions(this.config, options);
 
         this.hasCompleted = false;
         this.callback = null;
