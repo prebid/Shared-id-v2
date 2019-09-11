@@ -4,6 +4,7 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackExcludeAssetsPlugin = require('html-webpack-exclude-assets-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 
 module.exports = (env = {}, args = {}) => {
     console.log('Mode is ' + args.mode);
@@ -31,15 +32,11 @@ module.exports = (env = {}, args = {}) => {
                     }
                 }
             ]
-        }
-        ,
+        },
         plugins: [
-            new HtmlWebpackPlugin({
-                filename: 'pubcid.html',
-                template: 'src/pubcid.html'
-            }),
-            new HtmlWebpackExcludeAssetsPlugin()
-        ],
+            new CleanWebpackPlugin()
+        ]
+        ,
         devServer: {
             host: 'mockpub'
         },
@@ -52,6 +49,19 @@ module.exports = (env = {}, args = {}) => {
             ]
         }
     };
+
+    // Generate the test page if in dev mode
+
+    if (!isProd) {
+        config.plugins.push(
+            new HtmlWebpackPlugin({
+                filename: 'pubcid.html',
+                template: 'src/pubcid.html',
+                excludeAssets: [/index.js/]
+            }),
+            new HtmlWebpackExcludeAssetsPlugin()
+        );
+    }
 
     return config;
 };
