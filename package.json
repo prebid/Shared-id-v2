@@ -1,14 +1,13 @@
 {
   "name": "pubcid",
-  "version": "1.1.4-snapshot.0",
+  "version": "1.1.4-snapshot.1",
   "description": "Publisher Common ID",
   "scripts": {
     "lint": "eslint src/**/*.js",
     "start": "webpack-dev-server --mode=development",
     "build": "webpack --mode=production",
     "test": "npm run lint && karma start --single-run",
-    "test-bamboo": "npm run lint && karma start --single-run",
-    "prepublishOnly": "npm run build"
+    "test-bamboo": "npm run lint && karma start --single-run"
   },
   "repository": {
     "type": "git",
