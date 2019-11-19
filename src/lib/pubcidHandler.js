@@ -1,6 +1,7 @@
 import {getCookie, isCookieSupported, setCookie, delCookie} from './cookieUtils';
 import {uuid4, addQueryParam, firePixel, copyOptions} from './utils';
 import {getStorageItem, isStorageSupported, setStorageItem, removeStorageItem} from './storageUtils';
+import ConsentHandler from "./consentHandler/consentHandler";
 
 const COOKIE = 'cookie';
 const LOCAL_STORAGE = 'html5';
@@ -19,7 +20,11 @@ export default class PubcidHandler {
             cookieDomain: '',
             type: 'html5,cookie',
             extend: true,
-            pixelUrl: ''
+            pixelUrl: '',
+            consent: {
+                type: 'iab',
+                alwaysCallback: true
+            }
         };
 
         copyOptions(this.config, options);
@@ -48,29 +53,28 @@ export default class PubcidHandler {
 
     /**
      * Check whether there is consent to access pubcid
-     * @param {object} consentData Optional consent data
      * @returns {boolean} true if there is consent
      */
-    hasConsent(consentData) {
+    hasConsent(callback) {
         const {optoutName} = this.config;
+        let consentHandler = new ConsentHandler(this.config.consent);
 
         if (optoutName) {
             const optout = this.readValue(optoutName, COOKIE) || this.readValue(optoutName, LOCAL_STORAGE);
-            if (optout)
-                return false;
-        }
-
-        if (consentData) {
-            const vendorConsents = consentData.getVendorConsents;
-
-            if (vendorConsents && typeof vendorConsents.gdprApplies === 'boolean' && vendorConsents.gdprApplies === true) {
-                if (vendorConsents.purposeConsents && vendorConsents.purposeConsents[1] === false) {
-                    return false;
-                }
+            if (optout) {
+                callback(false);
+                return;
             }
         }
 
-        return true;
+        if(consentHandler.consentEnabled()){
+            consentHandler.hasSiteConsent((consent, success) =>{
+                callback(consent, success);
+            });
+        }
+        else {
+            callback(true);
+        }
     }
 
     /**
@@ -132,23 +136,26 @@ export default class PubcidHandler {
 
     /**
      * Retrieve pubcid.  Create it if it's not already there.
-     * @param {object} consentData Optional consent data
      * @returns {string} pubcid if exist.  Null otherwise.
      */
-    fetchPubcid(consentData) {
-        this.updatePubcidWithConsent(consentData);
+    fetchPubcid() {
+        this.updatePubcidWithConsent();
         return this.readPubcid();
     }
 
     /**
      * Create/Extend pubcid if there is consent.  Delete pubcid if there isn't.
-     * @param {object} consentData IAB consent
      */
-    updatePubcidWithConsent(consentData) {
-        if (this.hasConsent(consentData))
-            this.createPubcid();
-        else
-            this.deletePubcid();
+    updatePubcidWithConsent() {
+        const handler = this;
+        const callback = function(consent){
+            if(consent){
+                handler.createPubcid();
+            } else {
+                handler.deletePubcid();
+            }
+        };
+        this.hasConsent(callback);
     }
 
     /**
