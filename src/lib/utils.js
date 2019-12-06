@@ -6,7 +6,7 @@
 export function genRandomValue(radix = 16) {
     const cryptoObj = window.crypto || window.msCrypto; // for IE 11
     return (cryptoObj && cryptoObj.getRandomValues)
-        ? crypto.getRandomValues(new Uint8Array(1))[0] % radix
+        ? cryptoObj.getRandomValues(new Uint8Array(1))[0] % radix
         : Math.random() * radix;
 }
 

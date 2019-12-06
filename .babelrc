@@ -11,9 +11,11 @@
         "safari" : "8",
         "edge": "14",
         "firefox" : "57",
-        "ie" : "8",
-        "ios" : "8"
-      }
+        "ie" : "10",
+        "ios" : "9"
+      },
+      "useBuiltIns": "usage",
+      "corejs": 3
     }]
   ],
   "plugins": ["@babel/plugin-transform-object-assign"]

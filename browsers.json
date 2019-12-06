@@ -1,0 +1,52 @@
+{
+  "sl_ie_11_windows_10": {
+    "base": "SauceLabs",
+    "browserName": "internet explorer",
+    "platform": "Windows 10",
+    "version": "11"
+  },
+  "sl_firefox_66_windows_10": {
+    "base": "SauceLabs",
+    "browserName": "firefox",
+    "platform": "Windows 10",
+    "version": "66.0"
+  },
+  "sl_safari_11_mac_high_sierra": {
+    "base": "SauceLabs",
+    "browserName": "safari",
+    "platform": "macOS 10.13",
+    "version": "11.1"
+  },
+  "sl_safari_12_mac_mojave": {
+    "base": "SauceLabs",
+    "browserName": "safari",
+    "platform": "macOS 10.14",
+    "version": "12.0"
+  },
+  "sl_edge_16_windows_10": {
+    "base": "SauceLabs",
+    "browserName": "MicrosoftEdge",
+    "platform": "Windows 10",
+    "version": "16.16299"
+  },
+  "sl_chrome_66_windows_10": {
+    "base": "SauceLabs",
+    "browserName": "chrome",
+    "platform": "Windows 10",
+    "version": "66.0"
+  },
+  "sl_safari_ios_12": {
+    "base": "SauceLabs",
+    "browserName": "Safari",
+    "platform": "iOS",
+    "version": "12.2",
+    "deviceName": "iPhone 7 Simulator"
+  },
+  "sl_chrome_android_8": {
+    "base": "SauceLabs",
+    "browserName": "Chrome",
+    "platform": "Android",
+    "version": "8.0",
+    "deviceName": "Samsung Galaxy S7 HD GoogleAPI Emulator"
+  }
+}

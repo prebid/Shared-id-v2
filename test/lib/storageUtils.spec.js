@@ -13,15 +13,13 @@ describe('StorageUtils operations', ()=>{
 
 
     it('localStorage unavailable', ()=>{
-        // spyOn(window.localStorage, 'setItem').and.throwError(new DOMException('test'));
-        const stub = sinon.stub(window.localStorage, 'setItem').throws();
+        const stub = sinon.stub(Storage.prototype, 'setItem').throws();
         expect(storage.isStorageSupported('localStorage')).to.equal(false);
         stub.restore();
     });
 
     it('getStorageItem exception', ()=>{
-        // spyOn(window.localStorage, 'getItem').and.throwError(new DOMException('test'));
-        const stub = sinon.stub(window.localStorage, 'getItem').throws();
+        const stub = sinon.stub(Storage.prototype, 'getItem').throws();
         expect(storage.getStorageItem('check')).to.be.null;
         stub.restore();
     });
