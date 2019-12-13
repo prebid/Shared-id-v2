@@ -1,3 +1,5 @@
+import {expect} from 'chai';
+import sinon from "sinon";
 import * as storage from '../../src/lib/storageUtils';
 
 describe('StorageUtils operations', ()=>{
@@ -6,18 +8,22 @@ describe('StorageUtils operations', ()=>{
     });
 
     it('localStorage available', ()=>{
-        expect(storage.isStorageSupported('localStorage')).toEqual(true);
+        expect(storage.isStorageSupported('localStorage')).to.equal(true);
     });
 
 
     it('localStorage unavailable', ()=>{
-        spyOn(window.localStorage, 'setItem').and.throwError(new DOMException('test'));
-        expect(storage.isStorageSupported('localStorage')).toEqual(false);
+        // spyOn(window.localStorage, 'setItem').and.throwError(new DOMException('test'));
+        const stub = sinon.stub(window.localStorage, 'setItem').throws();
+        expect(storage.isStorageSupported('localStorage')).to.equal(false);
+        stub.restore();
     });
 
     it('getStorageItem exception', ()=>{
-        spyOn(window.localStorage, 'getItem').and.throwError(new DOMException('test'));
-        expect(storage.getStorageItem('check')).toBeNull();
+        // spyOn(window.localStorage, 'getItem').and.throwError(new DOMException('test'));
+        const stub = sinon.stub(window.localStorage, 'getItem').throws();
+        expect(storage.getStorageItem('check')).to.be.null;
+        stub.restore();
     });
 
     it('check setStorageItem', ()=>{
@@ -30,14 +36,14 @@ describe('StorageUtils operations', ()=>{
         const expVal = localStorage.getItem(key + '_exp');
         const storedVal = localStorage.getItem(key);
 
-        expect(expVal).not.toBeNull();
-        expect(storedVal).not.toBeNull();
+        expect(expVal).not.to.be.null;
+        expect(storedVal).not.to.be.null;
 
         const expDate = new Date(expVal);
 
         // Compare time based on seconds and allow tolerance on ones place, eg 100 ~= 102.
-        expect((expDate.getTime() - now)/1000).toBeCloseTo(5 * 60, -1);
-        expect(storedVal).toEqual(val);
+        expect((expDate.getTime() - now)/1000).to.be.closeTo(5 * 60, 1);
+        expect(storedVal).to.equal(val);
     });
 
 
@@ -46,10 +52,10 @@ describe('StorageUtils operations', ()=>{
         const val = 'test';
 
         storage.setStorageItem(key, val, 10);
-        expect(storage.getStorageItem(key)).toEqual(val);
+        expect(storage.getStorageItem(key)).to.equal(val);
 
         storage.removeStorageItem(key);
-        expect(storage.getStorageItem(key)).toBeNull();
+        expect(storage.getStorageItem(key)).to.be.null;
     });
 
     it('check expiry', ()=>{
@@ -58,9 +64,9 @@ describe('StorageUtils operations', ()=>{
 
         storage.setStorageItem(key, val, -1);
 
-        expect(localStorage.getItem(key)).toEqual(val);
-        expect(storage.getStorageItem(key)).toBeNull();
-        expect(localStorage.getItem(key)).toBeNull();
+        expect(localStorage.getItem(key)).to.equal(val);
+        expect(storage.getStorageItem(key)).to.be.null;
+        expect(localStorage.getItem(key)).to.be.null;
     });
 
     it('store url', ()=>{
@@ -69,6 +75,6 @@ describe('StorageUtils operations', ()=>{
 
         storage.setStorageItem(key, val, 100);
 
-        expect(storage.getStorageItem(key)).toEqual(val);
+        expect(storage.getStorageItem(key)).to.equal(val);
     });
 });

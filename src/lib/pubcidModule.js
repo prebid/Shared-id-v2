@@ -25,8 +25,8 @@ export function setupPubcid(w, d, options = {}) {
         return _cachedId;
     };
 
-    PublisherCommonId.init = function(consentData) {
-        _handler.updatePubcidWithConsent(consentData);
+    PublisherCommonId.init = function() {
+        _handler.updatePubcidWithConsent();
         _cachedId = _handler.readPubcid();
     };
 
