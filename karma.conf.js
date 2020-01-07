@@ -3,20 +3,19 @@ webpackConfig.mode = 'development';
 
 module.exports = (config) => {
     config.set({
-        frameworks: ['jasmine'],
+        frameworks: ['mocha'],
 
         files: [
             { pattern: 'test/**/*.spec.js' }
             ],
 
         preprocessors: {
-            'test/**/*.spec.js': ['webpack']
+            'test/**/*.spec.js': ['webpack', 'sourcemap']
         },
 
         webpack: webpackConfig,
 
-        reporters: ['spec'],
-        plugin: ["karma-spec-reporter"],
+        reporters: ['mocha', 'bamboo'],
 
         browsers: ['ChromeHeadlessNoSandbox'],
         customLaunchers: {

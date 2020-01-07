@@ -47,7 +47,8 @@ module.exports = (env = {}, args = {}) => {
                     include: /\.min\.js$/
                 }),
             ]
-        }
+        },
+        devtool: 'hidden-source-map'
     };
 
     // Generate the test page if in dev mode
