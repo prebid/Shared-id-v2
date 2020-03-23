@@ -1,7 +1,7 @@
 import {getCookie, isCookieSupported, setCookie, delCookie} from './cookieUtils';
 import {uuid4, addQueryParam, firePixel, copyOptions} from './utils';
 import {getStorageItem, isStorageSupported, setStorageItem, removeStorageItem} from './storageUtils';
-import ConsentHandler from "./consentHandler/consentHandler";
+import ConsentHandler from "./consenthandler/consentHandler";
 
 const COOKIE = 'cookie';
 const LOCAL_STORAGE = 'html5';

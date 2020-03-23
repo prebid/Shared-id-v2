@@ -1,11 +1,16 @@
+import {BaseProxy} from "./baseProxy";
+
+export const FRAME_PROXY_NAME = 'frameProxy';
 /**
  * Helper for communicating with cmp thru messages
  */
-export class FrameProxy {
+export class FrameProxy extends BaseProxy{
     constructor(frame, driver) {
+        super(driver);
         this.cmpCallbacks = {};
         this.cmpFrame = frame;
         this.driver = driver;
+        this.name = FRAME_PROXY_NAME;
 
         // Save the lambda so it can be used in both add and remove
         this.fProcess = (event) => this.processEvent(event);
@@ -19,7 +24,13 @@ export class FrameProxy {
      * @param {Object} event An event that might contain cmp response
      */
     processEvent(event) {
-        const json = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        let json = {};
+        try {
+            json = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        }
+        catch(e){
+            // ignore anything that cannot be parsed since it's clearly not meant for this handler.
+        }
 
         // Check if this is a reply from cmp
         if (json[this.driver.returnMsgName] && json[this.driver.returnMsgName].callId) {
@@ -62,7 +73,7 @@ export class FrameProxy {
      * @param {*} arg Optional argument for the cmp command
      * @param {function} callback Function to callback
      */
-    call(cmd, arg, callback) {
+    callApi(cmd, arg, callback) {
         // Generate a random id that helps to identify responses
         let callId = Math.random() + "";
 

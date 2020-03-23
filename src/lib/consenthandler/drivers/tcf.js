@@ -1,0 +1,118 @@
+import {BaseCmp} from "./baseCmp";
+
+export const TCF_GET_DATA = "getTCData";
+export const TCF_RETURN_MSG = "__tcfapiReturn";
+export const TCF_GET_MSG = "__tcfapiCall";
+export const TCF_FRAME = "__tcfapiLocator";
+export const TCF_API = '__tcfapi';
+export const TCF_API_VERSION = 2;
+
+export class Tcf extends BaseCmp {
+    constructor() {
+        super(TCF_API, TCF_RETURN_MSG, TCF_GET_MSG, TCF_FRAME);
+        this.tcData = {};
+        this.consentCallbackList = [];
+    }
+
+    /**
+     * Commands needed to fetch the consent data
+     * @returns {[[string]]}
+     */
+    getConsentCmd() {
+        return [[TCF_GET_DATA]];
+    }
+
+    /**
+     * maps the fields from the api calls to a common result set
+     * @param result
+     * @returns {{hasSiteConsent: *, gdpr_consent: *, gdpr: *}}
+     */
+    getConsentData(result) {
+        if(!result.publisher){ result.publisher = {}; }
+        if(!result.publisher.consents){ result.publisher.consents = {}; }
+        return this.formatConsentData(result.gdprApplies, result.tcString, result.publisher.consents['1']);
+    }
+
+    /**
+     * create the json structure for post requests used by frameProxy
+     * @param cmd
+     * @param arg
+     * @param callId
+     * @returns {{"[TCF_GET_MSG]": {callId: *, parameter: *, version: *, command: *}}}
+     */
+    createMsg(cmd,arg,callId){
+        return ({
+            [TCF_GET_MSG]: {
+                command: cmd,
+                version: TCF_API_VERSION,
+                parameter: arg,
+                callId: callId
+            }
+        });
+    }
+
+    /**
+     * direct api call used by LocalProxy
+     * @param fCmp
+     * @param cmd
+     * @param callback
+     * @param args
+     */
+    callCmp(fCmp, cmd, callback, args) {
+        fCmp(cmd, TCF_API_VERSION, callback, args);
+    }
+
+    /**
+     * on initialization we need to start a listener to receive the data when it's ready
+     * @returns {[[string]]}
+     */
+    getListenerCmd(){ return [["addEventListener"]]; }
+
+    /**
+     * cleanup the listener when we get the data back
+     * @returns {[[string]]}
+     */
+    getRmListenerCmd(){ return [["removeEventListener"]]; }
+
+    /**
+     * Once we get the consent data back if there is anyone waiting for the data run their callbacks now
+     * with the new data
+     * @param result
+     * @param success
+     * @returns {number}
+     */
+    fetchDataCallback(result, success) {
+        if (success){
+            const tcData = result[0];
+            if(tcData.cmpStatus === 'loaded' && (tcData.eventStatus === 'tcloaded' || tcData.eventStatus === 'useractioncomplete')) {
+                this.cmpSuccess = success;
+                this.tcData = this.getConsentData(tcData);
+                this.consentCallbackList.forEach((callback) => {
+                    callback(tcData, success);
+                });
+                return tcData.listenerId; // id so we can remove the listener
+            }
+        }
+        else{
+            this.cmpSuccess = success;
+            this.tcData = result; // return whatever came back from the cmp
+            this.consentCallbackList.forEach((callback) => {
+                callback(result, success);
+            });
+        }
+    }
+
+    /**
+     * Main function used by callers to get the consent data.  If the data is available return it now,
+     * otherwise put the callback on a waiting list to be run later when we get the data
+     * @param callback
+     */
+    getConsent(callback){
+        if(this.cmpSuccess !== undefined){
+            callback(this.tcData, this.cmpSuccess);
+        }
+        else{
+            this.consentCallbackList.push((tcData, success)=>{ callback(this.tcData, success); });
+        }
+    }
+}
