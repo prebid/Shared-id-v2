@@ -7,7 +7,7 @@ const CMP_CALL    = "__tcfapi";
 
 describe('Standalone pubcid default', ()=>{
     function mockResult(hasConsent){
-        return {cmpStatus: 'loaded', eventStatus: 'tcloaded', gdprApplies: true, publisher: {consents: {1: hasConsent}}};
+        return {cmpStatus: 'loaded', eventStatus: 'tcloaded', gdprApplies: true, purpose: {consents: {1: hasConsent}}};
     }
 
     after(()=>{
@@ -49,31 +49,33 @@ describe('Standalone pubcid default', ()=>{
         expect(pubcid).to.match(uuidPattern);
     });
 
-    it('iab consent', (done) => {
+    it('iab consent', () => {
         window[CMP_CALL] = (cmd, args, callback) => {
-            callback(mockResult(true));
+            callback(mockResult(true), true);
         };
         setupPubcid(window, document, {consent: {type: 'iab'}});
 
-        setTimeout(() => {
-            const pubcid = window.PublisherCommonId.getId();
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(window.PublisherCommonId.getId());
+            }, 200);
+        }).then((pubcid) => {
             expect(pubcid).to.match(uuidPattern);
-            done();
-        }, 500);
-
+        });
     });
 
-    it('iab no consent', (done) => {
+    it('iab no consent', () => {
         window[CMP_CALL] = (cmd, args, callback) => {
-            callback(mockResult(false));
+            callback(mockResult(false), true);
         };
         setupPubcid(window, document, {consent: {type: 'iab'}});
 
-        setTimeout(() => {
-            const pubcid = window.PublisherCommonId.getId();
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(window.PublisherCommonId.getId());
+            }, 200);
+        }).then((pubcid) => {
             expect(pubcid).to.equal('');
-            done();
-        }, 500);
-
+        });
     });
 });

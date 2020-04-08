@@ -23,10 +23,9 @@ export class BaseProxy {
     /**
      * wrapper function to call the drivers get function
      * @param callback
-     * @param timeout
      */
-    getConsent(callback, timeout) {
-        this.driver.getConsent(callback, timeout);
+    getConsent(callback) {
+        this.driver.getConsent(callback);
     }
 
     /**
@@ -46,7 +45,7 @@ export class BaseProxy {
         // Build a list of promises based on the requests
         requests.forEach((req) => {
             promiseList.push(new Promise((resolve, reject) => {
-                this.callApi(req[0], req[1], (result, success = true) => {
+                this.callApi(req[0], req[1], (result, success) => {
                     if (success) {
                         resolve(result);
                     }

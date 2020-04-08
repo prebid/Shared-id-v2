@@ -10,27 +10,26 @@ export const TCF_API_VERSION = 2;
 export class Tcf extends BaseCmp {
     constructor() {
         super(TCF_API, TCF_RETURN_MSG, TCF_GET_MSG, TCF_FRAME);
-        this.tcData = {};
+        this.cmpData = {};
         this.consentCallbackList = [];
     }
 
     /**
-     * Commands needed to fetch the consent data
-     * @returns {[[string]]}
+     * Normalize CMP v2 tcData into an object.
+     * @param tcData A tcData from v2 requests.
+     * @return {Object} Result with normalized fields.
      */
-    getConsentCmd() {
-        return [[TCF_GET_DATA]];
-    }
 
-    /**
-     * maps the fields from the api calls to a common result set
-     * @param result
-     * @returns {{hasSiteConsent: *, gdpr_consent: *, gdpr: *}}
-     */
-    getConsentData(result) {
-        if(!result.publisher){ result.publisher = {}; }
-        if(!result.publisher.consents){ result.publisher.consents = {}; }
-        return this.formatConsentData(result.gdprApplies, result.tcString, result.publisher.consents['1']);
+    formatData(tcData) {
+        const ret = {version: 2};
+        if (tcData) {
+            ret.gdprApplies = tcData.gdprApplies;
+            ret.consentString = tcData.tcString;
+            ret.tcData = tcData;
+            ret.hasStorageAccess = (ret.tcData && ret.tcData.purpose && ret.tcData.purpose.consents && ret.tcData.purpose.consents[1]);
+        }
+
+        return ret;
     }
 
     /**
@@ -86,18 +85,18 @@ export class Tcf extends BaseCmp {
             const tcData = result[0];
             if(tcData.cmpStatus === 'loaded' && (tcData.eventStatus === 'tcloaded' || tcData.eventStatus === 'useractioncomplete')) {
                 this.cmpSuccess = success;
-                this.tcData = this.getConsentData(tcData);
+                this.cmpData = this.formatData(tcData);
                 this.consentCallbackList.forEach((callback) => {
-                    callback(tcData, success);
+                    callback(this.cmpData, success);
                 });
                 return tcData.listenerId; // id so we can remove the listener
             }
         }
         else{
             this.cmpSuccess = success;
-            this.tcData = result; // return whatever came back from the cmp
+            this.cmpData = this.formatData(undefined); // return whatever came back from the cmp
             this.consentCallbackList.forEach((callback) => {
-                callback(result, success);
+                callback(this.cmpData, success);
             });
         }
     }
@@ -109,10 +108,10 @@ export class Tcf extends BaseCmp {
      */
     getConsent(callback){
         if(this.cmpSuccess !== undefined){
-            callback(this.tcData, this.cmpSuccess);
+            callback(this.cmpData, this.cmpSuccess);
         }
         else{
-            this.consentCallbackList.push((tcData, success)=>{ callback(this.tcData, success); });
+            this.consentCallbackList.push(callback);
         }
     }
 }

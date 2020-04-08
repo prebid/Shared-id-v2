@@ -3,10 +3,8 @@ import {
     Cmp,
     CMP_API,
     CMP_FRAME,
-    CMP_GET_CONSENT_CMD,
     CMP_GET_MSG,
-    CMP_RETURN_MSG,
-    CMP_SITE_CONSENT_CMD
+    CMP_RETURN_MSG
 } from "../../../src/lib/consenthandler/drivers/cmp";
 
 describe ('Cmp Driver', ()=>{
@@ -20,26 +18,21 @@ describe ('Cmp Driver', ()=>{
         expect(cmp.getMsgName).deep.equals(CMP_GET_MSG);
         expect(cmp.locatorFrame).deep.equals(CMP_FRAME);
     });
-
-    it('test getConsentCmd', ()=>{
-        const requests = cmp.getConsentCmd();
-        expect(requests.length).equals(2);
-        expect(requests[0][0]).equals(CMP_GET_CONSENT_CMD);
-        expect(requests[1][0]).equals(CMP_SITE_CONSENT_CMD);
+    it('test formatData', ()=>{
+        const testData = [{gdprApplies: true, consentData: "stringData"},{purposeConsents: {1: true}}];
+        const result = cmp.formatData(testData);
+        expect(result.version).to.equal(1);
+        expect(result.gdprApplies).to.equal(true);
+        expect(result.consentString).to.equal("stringData");
+        expect(result).to.have.deep.property('vendorData', testData[1]);
     });
-    it('test getConsentData', ()=>{
-        const testData = [{gdprApplies: "gdprAppliesData", consentData: "stringData"},true];
-        const result = cmp.getConsentData(testData);
-        expect(result.gdpr).equals("gdprAppliesData");
-        expect(result.gdpr_consent).equals("stringData");
-        expect(result.hasSiteConsent).to.be.true;
-    });
-    it('test getConsentData without data', ()=>{
+    it('test formatData without data', ()=>{
         const testData = [];
-        const result = cmp.getConsentData(testData);
-        expect(result.gdpr).to.not.exist;
-        expect(result.gdpr_consent).to.not.exist;
-        expect(result.hasSiteConsent).to.not.exist;
+        const result = cmp.formatData(testData);
+        expect(result.version).to.equal(1);
+        expect(result.gdprApplies).to.be.undefined;
+        expect(result.consentString).to.be.undefined;
+        expect(result.vendorData).to.be.undefined;
     });
     it('test createMsg', ()=>{
         const result = cmp.createMsg("cmd", "arg", "myid");
@@ -59,30 +52,32 @@ describe ('Cmp Driver', ()=>{
     it('test getConsent without data', ()=>{
         // eslint-disable-next-line no-console
         const callback = function(){console.log("should not be called")};
-        expect(cmp.consentCallbackList).length === 0;
+        expect(cmp.consentCallbackList).to.have.lengthOf(0);
         cmp.getConsent(callback);
-        expect(cmp.consentCallbackList).length === 1;
+        expect(cmp.consentCallbackList).to.have.lengthOf(1);
     });
     it('test getConsent with data', ()=>{
+        const cmpData = [{gdprApplies: true, consentData: 'somestring'}, {purposeConsents: {2: true}}];
         const callback = function(result, success){
-            expect(result.gdpr).equals('applies');
-            expect(result.gdpr_consent).equals('somestring');
+            expect(result.gdprApplies).equals(true);
+            expect(result.consentString).equals('somestring');
+            expect(result).to.have.deep.property('vendorData', cmpData[1]);
             expect(success).to.be.true;
         };
-        const cmpData = [{gdprApplies: 'applies', consentData: 'somestring'}];
         cmp.fetchDataCallback(cmpData, true);
         cmp.getConsent(callback);
     });
     it('test getConsent delayed loading', ()=>{
+        const cmpData = [{gdprApplies: false, consentData: 'somestring'}, {purposeConsents: {3: false}}];
         const callback = function(result, success){
-            expect(result.gdpr).equals('applies');
-            expect(result.gdpr_consent).equals('somestring');
+            expect(result.gdprApplies).to.be.false;
+            expect(result.consentString).to.equal('somestring');
+            expect(result).to.have.deep.property('vendorData', cmpData[1]);
             expect(success).to.be.true;
         };
-        const cmpData = [{gdprApplies: 'applies', consentData: 'somestring'}];
-        expect(cmp.consentCallbackList).length === 0;
+        expect(cmp.consentCallbackList).to.have.lengthOf(0);
         cmp.getConsent(callback);
-        expect(cmp.consentCallbackList).length === 1;
+        expect(cmp.consentCallbackList).to.have.lengthOf(1);
         cmp.fetchDataCallback(cmpData, true);
     });
 });

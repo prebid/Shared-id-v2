@@ -16,23 +16,21 @@ export class Cmp extends BaseCmp {
     }
 
     /**
-     * Commands needed to fetch the consent data
-     * CMP_GET_CONSENT_CMD gets the consent string
-     * CMP_SITE_CONSENT_CMD get the site consent field
-     * @returns {[string[], string[]]}
+     * Normalize CMP v1 consent data and vendor data into an object.
+     * @param results Expects an array of 2 items.  First is cmp v1 consent data, and second vendor data.
+     * @return {Object} Result with normalized fields.
      */
-    getConsentCmd(){
-        return [[CMP_GET_CONSENT_CMD],[CMP_SITE_CONSENT_CMD]];
-    }
 
-    /**
-     * maps the fields from the api calls to a common result set
-     * @param result
-     * @returns {{hasSiteConsent: *, gdpr_consent: *, gdpr: *}}
-     */
-    getConsentData(result){
-        if(!result[0]) result[0] = {};
-        return this.formatConsentData(result[0].gdprApplies, result[0].consentData, result[1]);
+    formatData(results) {
+        const ret = { version: 1 };
+        if (Array.isArray(results) && results.length >= 2) {
+            ret.gdprApplies = results[0].gdprApplies;
+            ret.consentString = results[0].consentData;
+            ret.vendorData = results[1];
+            ret.hasStorageAccess = (ret.vendorData && ret.vendorData.purposeConsents && ret.vendorData.purposeConsents[1]);
+        }
+
+        return ret;
     }
 
     /**
@@ -62,7 +60,7 @@ export class Cmp extends BaseCmp {
      * @returns {[[string]]}
      */
     getListenerCmd(){
-        return [[CMP_GET_CONSENT_CMD]];
+        return [[CMP_GET_CONSENT_CMD],[CMP_GET_VENDOR_CMD]];
     }
 
     /**
@@ -78,7 +76,7 @@ export class Cmp extends BaseCmp {
      */
     fetchDataCallback(result, success){
         this.cmpSuccess = success;
-        this.cmpData = this.getConsentData(result);
+        this.cmpData = this.formatData(success ? result : undefined);
         this.consentCallbackList.forEach((callback)=>{
             callback(this.cmpData, success);
         });

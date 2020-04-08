@@ -68,7 +68,7 @@ export default class PubcidHandler {
         }
 
         if(consentHandler.consentEnabled()){
-            consentHandler.hasSiteConsent(callback);
+            consentHandler.hasStorageConsent(callback);
         }
         else {
             callback(true);

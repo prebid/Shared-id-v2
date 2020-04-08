@@ -1,4 +1,4 @@
-import {Tcf, TCF_API, TCF_API_VERSION, TCF_FRAME, TCF_GET_DATA, TCF_GET_MSG, TCF_RETURN_MSG} from "../../../src/lib/consenthandler/drivers/tcf";
+import {Tcf, TCF_API, TCF_API_VERSION, TCF_FRAME, TCF_GET_MSG, TCF_RETURN_MSG} from "../../../src/lib/consenthandler/drivers/tcf";
 import {expect} from 'chai';
 
 describe ('Tcf Driver', ()=>{
@@ -12,27 +12,21 @@ describe ('Tcf Driver', ()=>{
         expect(tcf.getMsgName).deep.equals(TCF_GET_MSG);
         expect(tcf.locatorFrame).deep.equals(TCF_FRAME);
     });
-
-    it('test getConsentCmd', ()=>{
-        const requests = tcf.getConsentCmd();
-        expect(requests.length).equals(1);
-        requests.forEach((req)=>{
-            expect(req[0]).equals(TCF_GET_DATA);
-        })
-    });
-    it('test getConsentData', ()=>{
-        const testData = {gdprApplies: "gdprAppliesData", tcString: "stringData",publisher: {consents: {1: true}}};
-        const result = tcf.getConsentData(testData);
-        expect(result.gdpr).equals("gdprAppliesData");
-        expect(result.gdpr_consent).equals("stringData");
-        expect(result.hasSiteConsent).to.be.true;
+    it('test formatData', ()=>{
+        const testData = {gdprApplies: true, tcString: "stringData",publisher: {consents: {1: true}}};
+        const result = tcf.formatData(testData);
+        expect(result.version).to.equal(2);
+        expect(result.gdprApplies).to.equal(true);
+        expect(result.consentString).to.equal("stringData");
+        expect(result).to.have.deep.property('tcData', testData);
     });
     it('test getConsentData without data', ()=>{
-        const testData = {};
-        const result = tcf.getConsentData(testData);
-        expect(result.gdpr).to.not.exist;
-        expect(result.gdpr_consent).to.not.exist;
-        expect(result.hasSiteConsent).to.not.exist;
+        const testData = undefined;
+        const result = tcf.formatData(testData);
+        expect(result.version).to.equal(2);
+        expect(result.gdprApplies).to.be.undefined;
+        expect(result.consentString).to.be.undefined;
+        expect(result.tcData).to.be.undefined;
     });
     it('test createMsg', ()=>{
         const result = tcf.createMsg("cmd", "arg", "myid");
@@ -56,16 +50,37 @@ describe ('Tcf Driver', ()=>{
         const callback = function(){console.log("should not be called")};
         tcf.getConsent(callback);
         expect(tcf.consentCallbackList.length).equals(1);
-        delete tcf.consentCallbackList;
     });
     it('test getConsent with data', ()=>{
-        const callback = function(result, success){
-            expect(result.gdpr).equals('applies');
-            expect(result.gdpr_consent).equals('somestring');
-            expect(success).to.be.true;
-        };
-        tcf.tcData = {gdprApplies: 'applies', tcString: 'somestring'};
-        tcf.getConsent(callback);
-        delete tcf.tcData;
+        const testData = [{cmpStatus: 'loaded', eventStatus: 'useractioncomplete', gdprApplies: true, tcString: 'somestring', publisher: {consents: {1: true}}}];
+
+        tcf.fetchDataCallback(testData, true);
+
+        return new Promise((resolve) => {
+            tcf.getConsent((result) => {
+                resolve(result);
+            });
+        }).then((result) => {
+            expect(result.version).to.equal(2);
+            expect(result.gdprApplies).to.equal(true);
+            expect(result.consentString).to.equal('somestring');
+            expect(result).to.have.deep.property('tcData', testData[0]);
+        });
+    });
+    it('test getConsent delayed loading', ()=>{
+        const testData = [{cmpStatus: 'loaded', eventStatus: 'useractioncomplete', gdprApplies: true, tcString: 'somestring', publisher: {consents: {5: true}}}];
+
+        return new Promise((resolve) => {
+            tcf.getConsent((result) => {
+                resolve(result);
+            });
+            expect(tcf.consentCallbackList).to.have.lengthOf(1);
+            tcf.fetchDataCallback(testData, true);
+        }).then((result) => {
+            expect(result.version).to.equal(2);
+            expect(result.gdprApplies).to.equal(true);
+            expect(result.consentString).to.equal('somestring');
+            expect(result).to.have.deep.property('tcData', testData[0]);
+        });
     });
 });
