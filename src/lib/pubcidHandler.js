@@ -22,7 +22,7 @@ export default class PubcidHandler {
             extend: true,
             pixelUrl: '',
             consent: {
-                type: 'iab',
+                type: '',
                 alwaysCallback: true
             }
         };
@@ -68,9 +68,7 @@ export default class PubcidHandler {
         }
 
         if(consentHandler.consentEnabled()){
-            consentHandler.hasSiteConsent((consent, success) =>{
-                callback(consent, success);
-            });
+            consentHandler.hasSiteConsent(callback);
         }
         else {
             callback(true);

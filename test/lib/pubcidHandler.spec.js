@@ -34,13 +34,14 @@ describe('PubcidHandler', ()=> {
             clearAll();
         });
 
-        describe("iab", ()=>{
+        describe("iab enabled", ()=>{
+            const options = {consent: {type: 'iab'}};
             it('with consent', (done) => {
                 window[CMP_CALL] = (cmd, args, callback) => {
                     callback(mockResult(true));
                 };
 
-                const handler = new PubcidHandler();
+                const handler = new PubcidHandler(options);
                 let pubcid = handler.fetchPubcid();
 
                 setTimeout(()=>{
@@ -57,20 +58,29 @@ describe('PubcidHandler', ()=> {
                     callback(mockResult(false));
                 };
 
-                const handler = new PubcidHandler();
+                const handler = new PubcidHandler(options);
+                const pubcid = handler.fetchPubcid();
+                expect(pubcid).to.be.null;
+            });
+
+            it('cmp failed', () => {
+                window[CMP_CALL] = (cmd, args, callback) => {
+                    callback(mockResult(true), false);
+                };
+
+                const handler = new PubcidHandler(options);
                 const pubcid = handler.fetchPubcid();
                 expect(pubcid).to.be.null;
             });
         });
 
-        describe("non iab", ()=>{
-            const pubcidConfig = { consent:{ type: '' } };
+        describe("iab disabled", ()=>{
             it('with consent', (done) => {
                 window[CMP_CALL] = (cmd, args, callback) => {
                     callback(mockResult(true));
                 };
 
-                const handler = new PubcidHandler(pubcidConfig);
+                const handler = new PubcidHandler();
                 let pubcid = handler.fetchPubcid();
 
                 setTimeout(()=>{
@@ -82,15 +92,21 @@ describe('PubcidHandler', ()=> {
                 }, 500);
             });
 
-            it('without consent', () => {
+            it('without consent', (done) => {
                 window[CMP_CALL] = (cmd, args, callback) => {
                     callback({gdprApplies: true, publisher: {consents: {1: false}}});
                     callback(mockResult(false));
                 };
 
                 const handler = new PubcidHandler();
-                const pubcid = handler.fetchPubcid();
-                expect(pubcid).to.be.null;
+                let pubcid = handler.fetchPubcid();
+                setTimeout(()=>{
+                    if(!pubcid){
+                        pubcid = handler.readPubcid();
+                    }
+                    expect(pubcid).to.match(uuidPattern);
+                    done();
+                }, 500);
             });
         });
 

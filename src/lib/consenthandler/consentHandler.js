@@ -4,12 +4,15 @@ export default class ConsentHandler{
     constructor(option = {}){
         this.config = {
             timeout: 1000,
-            alwaysCallback: true
+            alwaysCallback: true,
+            type: 'iab'
         };
         Object.assign(this.config, option);
-        this.proxy = createProxy();
-        if(this.proxy) {
-            this.proxy.fetchConsentData();
+        if (this.config.type === 'iab') {
+            this.proxy = createProxy();
+            if (this.proxy) {
+                this.proxy.fetchConsentData();
+            }
         }
     }
 
