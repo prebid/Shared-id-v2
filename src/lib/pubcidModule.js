@@ -18,26 +18,22 @@ export function setupPubcid(w, d, options = {}) {
     }());
 
     const _handler = new PubcidHandler(options);
-    let _cachedId = '';
 
     // function to get the id value
     PublisherCommonId.getId = function() {
-        return _cachedId;
+        return _handler.readPubcid() || '';
     };
 
     PublisherCommonId.init = function() {
         _handler.updatePubcidWithConsent();
-        _cachedId = _handler.readPubcid();
     };
 
     PublisherCommonId.createId = function() {
         _handler.createPubcid({force: true});
-        _cachedId = _handler.readPubcid();
     };
 
     PublisherCommonId.deleteId = function() {
         _handler.deletePubcid();
-        _cachedId = '';
     };
 
     PublisherCommonId.generateId = function() {

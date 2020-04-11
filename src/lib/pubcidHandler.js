@@ -1,7 +1,7 @@
 import {getCookie, isCookieSupported, setCookie, delCookie} from './cookieUtils';
 import {uuid4, addQueryParam, firePixel, copyOptions} from './utils';
 import {getStorageItem, isStorageSupported, setStorageItem, removeStorageItem} from './storageUtils';
-import ConsentHandler from "./consentHandler/consentHandler";
+import ConsentHandler from "./consenthandler/consentHandler";
 
 const COOKIE = 'cookie';
 const LOCAL_STORAGE = 'html5';
@@ -22,7 +22,7 @@ export default class PubcidHandler {
             extend: true,
             pixelUrl: '',
             consent: {
-                type: 'iab',
+                type: '',
                 alwaysCallback: true
             }
         };
@@ -68,9 +68,7 @@ export default class PubcidHandler {
         }
 
         if(consentHandler.consentEnabled()){
-            consentHandler.hasSiteConsent((consent, success) =>{
-                callback(consent, success);
-            });
+            consentHandler.hasStorageConsent(callback);
         }
         else {
             callback(true);

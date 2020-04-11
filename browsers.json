@@ -42,11 +42,12 @@
     "version": "12.2",
     "deviceName": "iPhone 7 Simulator"
   },
-  "sl_chrome_android_8": {
+  "sl_chrome_android_7": {
     "base": "SauceLabs",
     "browserName": "Chrome",
     "platform": "Android",
-    "version": "8.0",
-    "deviceName": "Samsung Galaxy S7 HD GoogleAPI Emulator"
+    "version": "7.0",
+    "deviceOrientation": "portrait",
+    "deviceName": "Samsung Galaxy S7 GoogleAPI Emulator"
   }
 }
