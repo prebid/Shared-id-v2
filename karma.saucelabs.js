@@ -15,7 +15,7 @@ module.exports = function(config) {
             'test/**/*.spec.js': ['webpack', 'sourcemap']
         },
 
-        webpack: webpackConfig,
+        webpack: webpackConfig[0],
 
         reporters: ['mocha', 'saucelabs', 'bamboo'],
 

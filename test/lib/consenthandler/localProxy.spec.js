@@ -95,7 +95,6 @@ describe("Local Proxy test", ()=> {
 
         it("create Proxy", () => {
             const fCmp = function(cmd, args, callback) {
-                console.log('cmd: ' + cmd);
                 if (sampleData[cmd])
                     callback(sampleData[cmd], true);
                 else
