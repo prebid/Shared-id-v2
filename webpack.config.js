@@ -3,6 +3,7 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackExcludeAssetsPlugin = require('html-webpack-exclude-assets-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = (env = {}, args = {}) => {
     const mode = args.mode;
@@ -48,7 +49,7 @@ module.exports = (env = {}, args = {}) => {
         plugins: [
             new CleanWebpackPlugin(
                 // Only clean up files related to scripts before build
-                {cleanOnceBeforeBuildPatterns: ['pubcid.*']}
+                {cleanOnceBeforeBuildPatterns: ['pubcid.*', 'stats.json']}
             )
         ]
         ,
@@ -105,6 +106,15 @@ module.exports = (env = {}, args = {}) => {
             }),
             new HtmlWebpackExcludeAssetsPlugin()
         );
+    }
+    else {
+        scriptConfig.plugins.push(
+            new BundleAnalyzerPlugin({
+                analyzerMode: 'disabled',
+                generateStatsFile: true,
+                statsOptions: { source: false }
+            })
+        )
     }
 
     return [scriptConfig, libConfig];
