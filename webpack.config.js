@@ -1,13 +1,18 @@
 'use strict';
 
-//const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackExcludeAssetsPlugin = require('html-webpack-exclude-assets-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 
 module.exports = (env = {}, args = {}) => {
-    const mode = args.mode || 'production';
-    console.log('Mode is ' + mode);
+    const mode = args.mode;
+    const mapType = (mode === 'production') ? 'hidden-source-map' : 'inline-source-map';
+
+    console.log('Mode: ' + mode);
+    console.log('Map:  ' + mapType);
+
+    // Return 2 configs in an array.  First one is a minimized script that is placed in CDN,
+    // and the second one as a library used by other projects.
 
     const scriptConfig = {
         mode: mode,
@@ -23,14 +28,17 @@ module.exports = (env = {}, args = {}) => {
             rules: [
                 {
                     test: /\.js$/,
-                    exclude: /(node_modules|bower_components)/,
+                    exclude: /node_modules/,
                     use: {
                         loader: 'babel-loader',
                         options: {
+                            // Turn on polyfill with core-js
                             presets: [['@babel/preset-env', {
                                 // debug: true,
                                 useBuiltIns: "usage",
                                 corejs: 3,}]],
+
+                            // Transform to commonjs modules so sinon spies can work in unit tests
                             plugins: ['@babel/plugin-transform-modules-commonjs'],
                         },
                     }
@@ -39,6 +47,7 @@ module.exports = (env = {}, args = {}) => {
         },
         plugins: [
             new CleanWebpackPlugin(
+                // Only clean up files related to scripts before build
                 {cleanOnceBeforeBuildPatterns: ['pubcid.*']}
             )
         ]
@@ -46,7 +55,7 @@ module.exports = (env = {}, args = {}) => {
         devServer: {
             host: 'mockpub'
         },
-        devtool: 'hidden-source-map'
+        devtool: mapType
     };
 
     const libConfig = {
@@ -67,6 +76,8 @@ module.exports = (env = {}, args = {}) => {
                     use: {
                         loader: 'babel-loader',
                         options: {
+                            // No polyfill
+                            // Transform to commonjs module so that clients can call exported functions
                             plugins: ['@babel/plugin-transform-modules-commonjs'],
                         },
                     }
@@ -75,10 +86,11 @@ module.exports = (env = {}, args = {}) => {
         },
         plugins: [
             new CleanWebpackPlugin(
+                // Only clean up files related to library before build
                 {cleanOnceBeforeBuildPatterns: ['index.*']}
             )
         ],
-        devtool: 'source-map'
+        devtool: mapType
     };
 
     // Generate the test page if in dev mode

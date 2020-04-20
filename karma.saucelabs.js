@@ -1,4 +1,4 @@
-const webpackConfig = require('./webpack.config')();
+const webpackConfig = require('./webpack.config')(undefined, {mode: 'development'});
 const browsers = require('./browsers.json');
 const pkg = require('./package.json');
 
