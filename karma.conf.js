@@ -1,4 +1,4 @@
-const webpackConfig = require('./webpack.config')();
+const webpackConfig = require('./webpack.config')(undefined, {mode: 'development'});
 webpackConfig.mode = 'development';
 
 module.exports = (config) => {
@@ -13,7 +13,7 @@ module.exports = (config) => {
             'test/**/*.spec.js': ['webpack', 'sourcemap']
         },
 
-        webpack: webpackConfig,
+        webpack: webpackConfig[0],
 
         reporters: ['mocha', 'bamboo'],
 

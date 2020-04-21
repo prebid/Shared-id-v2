@@ -1,4 +1,4 @@
-const webpackConfig = require('./webpack.config')();
+const webpackConfig = require('./webpack.config')(undefined, {mode: 'development'});
 const browsers = require('./browsers.json');
 const pkg = require('./package.json');
 
@@ -15,7 +15,7 @@ module.exports = function(config) {
             'test/**/*.spec.js': ['webpack', 'sourcemap']
         },
 
-        webpack: webpackConfig,
+        webpack: webpackConfig[0],
 
         reporters: ['mocha', 'saucelabs', 'bamboo'],
 

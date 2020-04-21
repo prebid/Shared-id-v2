@@ -397,15 +397,15 @@ describe('PubcidHandler', ()=> {
     });
 
     describe('pixels and extend', ()=>{
-        let pixelSpy, cookieSpy;
+        let pixelStub, cookieSpy;
         before(()=>{
-            pixelSpy = sinon.spy(utils, 'firePixel');
+            pixelStub = sinon.stub(utils, 'firePixel');
             cookieSpy = sinon.spy(cookieUtils, 'setCookie');
             clearAll();
         });
 
         beforeEach(() => {
-            pixelSpy.resetHistory();
+            pixelStub.resetHistory();
             cookieSpy.resetHistory();
         });
 
@@ -423,7 +423,7 @@ describe('PubcidHandler', ()=> {
             cookieSpy.resetHistory();
             handler.fetchPubcid();
             sinon.assert.callCount(cookieSpy, 1);
-            sinon.assert.callCount(pixelSpy, 0);
+            sinon.assert.callCount(pixelStub, 0);
         });
 
         it('extend is disabled', () => {
@@ -436,7 +436,7 @@ describe('PubcidHandler', ()=> {
             cookieSpy.resetHistory();
             handler.fetchPubcid();
             sinon.assert.callCount(cookieSpy, 0);
-            sinon.assert.callCount(pixelSpy, 0);
+            sinon.assert.callCount(pixelStub, 0);
         });
 
         it('fire pixel once', () => {
@@ -446,14 +446,14 @@ describe('PubcidHandler', ()=> {
             let pubcid = handler.fetchPubcid();
             expect(pubcid).to.match(uuidPattern);
             sinon.assert.callCount(cookieSpy, 1);
-            sinon.assert.callCount(pixelSpy, 1);
+            sinon.assert.callCount(pixelStub, 1);
 
-            expect(pixelSpy.getCall(0).args[0]).to.equal('/any/url/?id=' + encodeURIComponent('pubcid:' + pubcid));
+            expect(pixelStub.getCall(0).args[0]).to.equal('/any/url/?id=' + encodeURIComponent('pubcid:' + pubcid));
 
             // There should be no increment in counts after the 2nd call
             handler.fetchPubcid();
             sinon.assert.callCount(cookieSpy, 1);
-            sinon.assert.callCount(pixelSpy, 1);
+            sinon.assert.callCount(pixelStub, 1);
         });
 
         it('fire pixel every time', () => {
@@ -463,15 +463,15 @@ describe('PubcidHandler', ()=> {
             let pubcid = handler.fetchPubcid();
             expect(pubcid).to.match(uuidPattern);
             sinon.assert.callCount(cookieSpy, 1);
-            sinon.assert.callCount(pixelSpy, 1);
+            sinon.assert.callCount(pixelStub, 1);
 
-            expect(pixelSpy.getCall(0).args[0]).to.equal('/any/url/?id=' + encodeURIComponent('pubcid:' + pubcid));
+            expect(pixelStub.getCall(0).args[0]).to.equal('/any/url/?id=' + encodeURIComponent('pubcid:' + pubcid));
 
             // There should be an increment in firePixel count only
             let pubcid2 = handler.fetchPubcid();
             sinon.assert.callCount(cookieSpy, 1);
-            sinon.assert.callCount(pixelSpy, 2);
-            expect(pixelSpy.getCall(1).args[0]).to.equal('/any/url/?id=' + encodeURIComponent('pubcid:' + pubcid2));
+            sinon.assert.callCount(pixelStub, 2);
+            expect(pixelStub.getCall(1).args[0]).to.equal('/any/url/?id=' + encodeURIComponent('pubcid:' + pubcid2));
         });
     });
 });
