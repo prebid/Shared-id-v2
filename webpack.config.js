@@ -33,14 +33,14 @@ module.exports = (env = {}, args = {}) => {
                     use: {
                         loader: 'babel-loader',
                         options: {
-                            // Turn on polyfill with core-js
-                            presets: [['@babel/preset-env', {
-                                // debug: true,
-                                useBuiltIns: "usage",
-                                corejs: 3,}]],
-
                             // Transform to commonjs modules so sinon spies can work in unit tests
-                            plugins: ['@babel/plugin-transform-modules-commonjs'],
+                            presets: [['@babel/preset-env', {modules: 'cjs'}]],
+
+                            plugins: [
+                                ['@babel/plugin-transform-runtime', {
+                                    corejs: 3
+                                }]
+                            ],
                         },
                     }
                 }
@@ -77,9 +77,10 @@ module.exports = (env = {}, args = {}) => {
                     use: {
                         loader: 'babel-loader',
                         options: {
-                            // No polyfill
-                            // Transform to commonjs module so that clients can call exported functions
-                            plugins: ['@babel/plugin-transform-modules-commonjs'],
+                            presets: [['@babel/preset-env', {}]],
+                            plugins: [['@babel/plugin-transform-runtime', {
+                                corejs: 3
+                            }]]
                         },
                     }
                 },

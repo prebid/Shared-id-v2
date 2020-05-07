@@ -3,7 +3,7 @@ import {getCookie, delCookie, clearAllCookies, setCookie, isCookieSupported} fro
 import {isStorageSupported, getStorageItem, setStorageItem, removeStorageItem, clearStorage} from './lib/storageUtils';
 import ConsentHandler from "./lib/consenthandler/consentHandler";
 
-module.exports = {
+export {
   PubcidHandler,
   ConsentHandler,
   getCookie,
