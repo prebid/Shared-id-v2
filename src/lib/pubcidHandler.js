@@ -22,7 +22,7 @@ export default class PubcidHandler {
             extend: true,
             pixelUrl: '',
             consent: {
-                type: '',
+                type: 'iab',
                 alwaysCallback: true
             }
         };
