@@ -49,6 +49,7 @@
     "@babel/runtime-corejs3": "^7.9.6"
   },
   "main": "dist/index.js",
+  "module": "src/index.js",
   "publishConfig": {
     "registry": "http://vault.cnvrmedia.net/nexus/content/repositories/npm-internal/"
   }
