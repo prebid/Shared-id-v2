@@ -1,4 +1,4 @@
-FROM dr.cnvr.net:5000/mpub/base-cnvr-centos7-nodejs-chrome:released
+FROM dtr.cnvr.net/cpe/base-cnvr-centos7-nodejs-chrome:released
 
 COPY package.json /var/build/package.json
 WORKDIR /var/build
