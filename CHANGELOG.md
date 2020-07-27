@@ -1,0 +1,24 @@
+# Changelog
+Notable changes to the project
+
+## [Unreleased]
+
+## [1.3.3] - 2020-07-27
+### Changed
+- Docker repo change for production environment.
+
+## [1.3.2]
+### Changed
+- Create package with module statement to allow clients to select polyfill
+
+## [1.3.1]
+### Changed
+- Switch to use @babel/plugin-transform-runtime for smaller bundle size
+
+## [1.3.0]
+### Changed
+- Webpack config file cleanup
+
+## [1.2.0]
+### Added
+- TCF V2 support
