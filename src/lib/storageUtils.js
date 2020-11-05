@@ -1,4 +1,6 @@
 import log from './log';
+import {COOKIE, LOCAL_STORAGE} from "./constants";
+import {delCookie, getCookie, setCookie} from "./cookieUtils";
 
 const EXP_SUFFIX = '_exp';
 
@@ -114,5 +116,59 @@ export function removeStorageItem(key) {
     }
     catch(e) {
         log.debug(e);
+    }
+}
+
+/**
+ * Read a value by checking cookies first and then local storage.
+ * @param {string} type Storage type
+ * @param {string} name Name of the item
+ * @returns {string|null} a string if item exists
+ */
+export function readValue(type, name) {
+    let value;
+
+    if (type === COOKIE) {
+        value = getCookie(name);
+    } else if (type === LOCAL_STORAGE) {
+        value = getStorageItem(name);
+    }
+
+    if (value === 'undefined' || value === 'null')
+        return null;
+
+    return value;
+}
+
+/**
+ * Write a value to cookies or local storage
+ * @param {string} type Storage type
+ * @param {string} name Name of the item
+ * @param {string} value Value to be stored
+ * @param {number} expInterval Expiry time in minutes
+ * @param {string} domain Cookie cookieDomain
+ */
+export function writeValue(type, name, value, expInterval, domain) {
+    if (name && value) {
+        if (type === COOKIE) {
+            setCookie(name, value, expInterval, domain, '/', 'Lax');
+        } else if (type === LOCAL_STORAGE) {
+            setStorageItem(name, value, expInterval);
+        }
+    }
+}
+
+/**
+ * Delete value from cookies or local storage
+ * @param {string} type Storage type
+ * @param {string} name Name of the item
+ */
+export function deleteValue(type, name) {
+    if (name) {
+        if (type === COOKIE) {
+            delCookie(name);
+        } else if (type === LOCAL_STORAGE) {
+            removeStorageItem(name);
+        }
     }
 }

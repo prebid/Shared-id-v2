@@ -5,6 +5,8 @@ import * as cookieUtils from "../../src/lib/cookieUtils";
 import * as utils from '../../src/lib/utils';
 import {TCF_API} from '../../src/lib/consenthandler/drivers/tcf';
 import {CMP_API, CMP_GET_CONSENT_CMD, CMP_GET_VENDOR_CMD} from '../../src/lib/consenthandler/drivers/cmp';
+import {writeValue} from "../../src/lib/storageUtils";
+import {COOKIE, LOCAL_STORAGE} from '../../src/lib/constants';
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89a-f][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -21,21 +23,26 @@ describe('PubcidHandler', ()=> {
         }
     }
 
-    describe("storage operations", ()=> {
-        before(()=>{
+    describe('check iab consents', ()=> {
+        before(() => {
             clearAll();
         });
 
         afterEach(() => {
-            if(window[TCF_API]) delete window[TCF_API];
-            if(window[CMP_API]) delete window[CMP_API];
+            if (window[TCF_API]) delete window[TCF_API];
+            if (window[CMP_API]) delete window[CMP_API];
             clearAll();
         });
 
-        describe("TCF enabled", ()=>{
+        describe("TCF enabled", () => {
 
-            function mockResult(hasConsent){
-                return {cmpStatus: 'loaded', eventStatus: 'tcloaded', gdprApplies: true, purpose: {consents: {1: hasConsent}}};
+            function mockResult(hasConsent) {
+                return {
+                    cmpStatus: 'loaded',
+                    eventStatus: 'tcloaded',
+                    gdprApplies: true,
+                    purpose: {consents: {1: hasConsent}}
+                };
             }
 
             const options = {consent: {type: 'iab'}};
@@ -73,6 +80,35 @@ describe('PubcidHandler', ()=> {
                 });
             });
 
+            it('without consent and existing pubcids in cookie and local storage', () => {
+                // Given a mock TCF that returns no consent
+                window[TCF_API] = (cmd, args, callback) => {
+                    callback(mockResult(false), true);
+                };
+
+                // And existing pubcids stored in both cookie and local storage
+                cookieUtils.setCookie(DEFAULT_NAME, 'existing', 30);
+                window.localStorage.setItem(DEFAULT_NAME, 'another_existing');
+
+                // When fetchPubcid is called
+                const handler = new PubcidHandler(options);
+                handler.fetchPubcid();
+
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve(handler.readPubcid());
+                    }, 200);
+                }).then((pubcid) => {
+                    // Then no pubcid value can be read
+                    expect(pubcid).to.be.null;
+                    // And pubcid are erased from both locations
+                    const cookieValue = cookieUtils.getCookie(DEFAULT_NAME);
+                    expect(cookieValue).to.be.null;
+                    const storageValue = window.localStorage.getItem(DEFAULT_NAME);
+                    expect(storageValue).to.be.null;
+                });
+            });
+
             it('TCF failed', () => {
                 window[TCF_API] = (cmd, args, callback) => {
                     callback(mockResult(true), false);
@@ -91,14 +127,14 @@ describe('PubcidHandler', ()=> {
             });
         });
 
-        describe("CMP enabled", ()=>{
+        describe("CMP enabled", () => {
             const sampleData = {
-                [CMP_GET_CONSENT_CMD] : {
+                [CMP_GET_CONSENT_CMD]: {
                     gdprApplies: true,
                     hasGlobalScope: false,
                     consentData: '12345_67890'
                 },
-                [CMP_GET_VENDOR_CMD] : {
+                [CMP_GET_VENDOR_CMD]: {
                     metadata: '09876_54321',
                     gdprApplies: true,
                     hasGlobalScope: false,
@@ -110,7 +146,7 @@ describe('PubcidHandler', ()=> {
 
             const options = {consent: {type: 'iab'}};
             it('with consent', () => {
-                window[CMP_API] = function(cmd, arg, callback) {
+                window[CMP_API] = function (cmd, arg, callback) {
                     if (sampleData[cmd])
                         callback(sampleData[cmd], true);
                     else
@@ -175,7 +211,8 @@ describe('PubcidHandler', ()=> {
                     else if (sampleData[cmd])
                         callback(sampleData[cmd], true);
                     else
-                        callback(null, false);                };
+                        callback(null, false);
+                };
 
                 const handler = new PubcidHandler({consent: {type: 'iab', alwaysCallback: false}});
                 handler.fetchPubcid();
@@ -190,7 +227,7 @@ describe('PubcidHandler', ()=> {
             });
         });
 
-        describe("iab disabled", ()=>{
+        describe("iab disabled", () => {
             it('with consent', () => {
                 window[TCF_API] = (cmd, args, callback) => {
                     callback(mockResult(true), true);
@@ -225,7 +262,16 @@ describe('PubcidHandler', ()=> {
                 });
             });
         });
+    });
 
+    describe('check optout', ()=> {
+        before(()=>{
+            clearAll();
+        });
+
+        afterEach(()=>{
+           clearAll();
+        });
 
         it('default opt-in', () => {
             const handler = new PubcidHandler();
@@ -239,7 +285,7 @@ describe('PubcidHandler', ()=> {
             expect(pubcid2).to.equal(pubcid);
         });
 
-        it('default opt-out', () => {
+        it('default optout', () => {
             cookieUtils.setCookie(DEFAULT_OPTOUT_NAME, 1, 50);
 
             const handler = new PubcidHandler();
@@ -249,6 +295,56 @@ describe('PubcidHandler', ()=> {
 
             const storedValue = window.localStorage.getItem(DEFAULT_NAME);
             expect(storedValue).to.be.null;
+        });
+
+        it('Local storage optout with existing cookie', () => {
+            // Given a pubcid saved as cookie and optout in local storage
+            const pubcidValue = 'existing1';
+            cookieUtils.setCookie(DEFAULT_NAME, pubcidValue, 60);
+            window.localStorage.setItem(DEFAULT_OPTOUT_NAME, 1);
+
+            // When fetchPubcid is called
+            const handler = new PubcidHandler({type: LOCAL_STORAGE});
+            const pubcid = handler.fetchPubcid();
+
+            // Then no pubcid should be returned
+            expect(pubcid).to.be.null;
+
+            // And pubcid should be removed from both cookie and local storage
+            const storedValue = window.localStorage.getItem(DEFAULT_NAME);
+            expect(storedValue).to.be.null;
+            const cookieValue = cookieUtils.getCookie(DEFAULT_NAME);
+            expect(cookieValue).to.be.null;
+        });
+
+        it('Cookie optout with existing local storage', () => {
+            // Given a pubcid saved as cookie and optout in local storage
+            const pubcidValue = 'existing2';
+            window.localStorage.setItem(DEFAULT_NAME, pubcidValue);
+            cookieUtils.setCookie(DEFAULT_OPTOUT_NAME, 1, 50);
+
+            // When fetchPubcid is called
+            const handler = new PubcidHandler({type: COOKIE});
+            const pubcid = handler.fetchPubcid();
+
+            // Then no pubcid should be returned
+            expect(pubcid).to.be.null;
+
+            // And pubcid should be removed from both cookie and local storage
+            const storedValue = window.localStorage.getItem(DEFAULT_NAME);
+            expect(storedValue).to.be.null;
+            const cookieValue = cookieUtils.getCookie(DEFAULT_NAME);
+            expect(cookieValue).to.be.null;
+        });
+    });
+
+    describe('fetchPubcid', ()=>{
+        before(()=>{
+            clearAll();
+        });
+
+        afterEach(()=>{
+            clearAll();
         });
 
         it('change cookie name', () => {
@@ -277,7 +373,7 @@ describe('PubcidHandler', ()=> {
         });
 
         it('cookie read only', () => {
-            const options = {type: 'cookie', create: false};
+            const options = {type: COOKIE, create: false};
 
             const handler = new PubcidHandler(options);
             let pubcid = handler.fetchPubcid();
@@ -295,8 +391,7 @@ describe('PubcidHandler', ()=> {
         it('accidental write of undefined', () => {
             const key = 'test';
 
-            const handler = new PubcidHandler();
-            handler.writeValue(key, undefined);
+            writeValue(LOCAL_STORAGE, key, undefined);
             const val = localStorage.getItem(key);
 
             expect(val).to.be.null;
@@ -313,7 +408,7 @@ describe('PubcidHandler', ()=> {
         });
 
         it('cookie only', () => {
-            const handler = new PubcidHandler({type: 'cookie'});
+            const handler = new PubcidHandler({type: COOKIE});
             const pubcid = handler.fetchPubcid();
             expect(pubcid).to.match(uuidPattern);
 
@@ -324,8 +419,8 @@ describe('PubcidHandler', ()=> {
             expect(pubcid2).to.equal(pubcid);
         });
 
-        it('storage only', () => {
-            const handler = new PubcidHandler({type: 'html5'});
+        it('local storage only', () => {
+            const handler = new PubcidHandler({type: LOCAL_STORAGE});
             const pubcid = handler.fetchPubcid();
             expect(pubcid).to.match(uuidPattern);
 
@@ -414,7 +509,7 @@ describe('PubcidHandler', ()=> {
         });
 
         it('extend is enabled', () => {
-            const options = {type: 'cookie'};
+            const options = {type: COOKIE};
 
             const handler = new PubcidHandler(options);
             let pubcid = handler.fetchPubcid();
@@ -427,7 +522,7 @@ describe('PubcidHandler', ()=> {
         });
 
         it('extend is disabled', () => {
-            const options = {type: 'cookie', extend: false};
+            const options = {type: COOKIE, extend: false};
 
             const handler = new PubcidHandler(options);
             let pubcid = handler.fetchPubcid();
@@ -440,7 +535,7 @@ describe('PubcidHandler', ()=> {
         });
 
         it('fire pixel once', () => {
-            const options = {type: 'cookie', extend: false, pixelUrl: '/any/url/'};
+            const options = {type: COOKIE, extend: false, pixelUrl: '/any/url/'};
 
             const handler = new PubcidHandler(options);
             let pubcid = handler.fetchPubcid();
@@ -457,7 +552,7 @@ describe('PubcidHandler', ()=> {
         });
 
         it('fire pixel every time', () => {
-            const options = {type: 'cookie', extend: true, pixelUrl: '/any/url/'};
+            const options = {type: COOKIE, extend: true, pixelUrl: '/any/url/'};
 
             const handler = new PubcidHandler(options);
             let pubcid = handler.fetchPubcid();
