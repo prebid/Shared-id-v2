@@ -389,6 +389,137 @@ describe('PubcidHandler', ()=> {
 
     });
 
+    describe('updatePubcidWithConsent', ()=>{
+        before(()=>{
+            clearAll();
+        });
+
+        afterEach(()=>{
+            clearAll();
+        });
+
+        it('create with consent', (done)=>{
+            // Given a default handler with no existing pubcid
+            const handler = new PubcidHandler();
+            // When updatePubcidWithConsent is called
+            handler.updatePubcidWithConsent((pubcid)=>{
+                // Then a new pubcid is generated and passed to the callback
+                expect(pubcid).to.match(uuidPattern);
+                done();
+            });
+        });
+
+        it('create without consent', (done)=>{
+            // Given a default handler with no existing pubcid but with optout
+            const handler = new PubcidHandler();
+            cookieUtils.setCookie(DEFAULT_OPTOUT_NAME, 1, 30);
+            // When updatePubcidWithConsent is called
+            handler.updatePubcidWithConsent((pubcid)=>{
+                // Then callback receives null as pubcid
+                expect(pubcid).to.be.null;
+                done();
+            });
+        });
+
+        it('existing pubcid with consent', (done)=>{
+            // Given a default handler with existing pubcid
+            const handler = new PubcidHandler();
+            const expected = 'testUpdate1';
+            window.localStorage.setItem(DEFAULT_NAME, expected);
+            // When updatePubcidWithConsent is called
+            handler.updatePubcidWithConsent((pubcid)=>{
+                // Then callback receives the existing pubcid value
+                expect(pubcid).to.equal(expected);
+                // And the stored value remain unchanged
+                const storedValue = window.localStorage.getItem(DEFAULT_NAME);
+                expect(storedValue).to.equal(expected);
+                done();
+            });
+        });
+
+        it('existing pubcid without consent', (done)=>{
+            // Given a default handler with existing pubcid, but without consent
+            const handler = new PubcidHandler();
+            cookieUtils.setCookie(DEFAULT_NAME, 'some_random_value', 30);
+            cookieUtils.setCookie(DEFAULT_OPTOUT_NAME, 1, 30);
+            // When updatePubcidWithConsent is called
+            handler.updatePubcidWithConsent((pubcid)=>{
+                // Then callback receives null as pubcid value
+                expect(pubcid).to.be.null;
+                // And stored value is also deleted
+                const storedValue = cookieUtils.getCookie(DEFAULT_NAME);
+                expect(storedValue).to.be.null;
+                done();
+            });
+        });
+    });
+
+    describe('readPubcidWithConsent', ()=>{
+        before(()=>{
+            clearAll();
+        });
+
+        afterEach(()=>{
+            clearAll();
+        });
+
+        it('read with consent', (done)=>{
+            // Given a default handler with no existing pubcid
+            const handler = new PubcidHandler();
+            // When readPubcidWithConsent is called
+            handler.readPubcidWithConsent((pubcid)=>{
+                // Then callback receives null as pubcid
+                expect(pubcid).to.be.null;
+                done();
+            });
+        });
+
+        it('read without consent', (done)=>{
+            // Given a default handler with no existing pubcid, but with an optout
+            const handler = new PubcidHandler();
+            cookieUtils.setCookie(DEFAULT_OPTOUT_NAME, 1, 30);
+            // When readPubcidWithConsent is called
+            handler.readPubcidWithConsent((pubcid)=>{
+                // Then callback receives null as pubcid
+                expect(pubcid).to.be.null;
+                done();
+            });
+        });
+
+        it('existing pubcid with consent', (done)=>{
+            // Given a default handler with existing pubcid
+            const handler = new PubcidHandler();
+            const expected = 'testRead1';
+            window.localStorage.setItem(DEFAULT_NAME, expected);
+            // When readPubcidWithConsent is called
+            handler.readPubcidWithConsent((pubcid)=>{
+                // Then expected pubcid is received by the callback
+                expect(pubcid).to.equal(expected);
+                // And the stored value remain unchanged
+                const storedValue = window.localStorage.getItem(DEFAULT_NAME);
+                expect(storedValue).to.equal(expected);
+                done();
+            });
+        });
+
+        it('existing pubcid without consent', (done)=>{
+            // Given a default handler with existing pubcid and optout
+            const handler = new PubcidHandler();
+            const expected = 'testRead2';
+            cookieUtils.setCookie(DEFAULT_NAME, expected, 30);
+            cookieUtils.setCookie(DEFAULT_OPTOUT_NAME, 1, 30);
+            // When readPubcidWithConsent is called
+            handler.readPubcidWithConsent((pubcid)=>{
+                // Then callback receives a null
+                expect(pubcid).to.be.null;
+                // And the stored value remain unchanged
+                const storedValue = cookieUtils.getCookie(DEFAULT_NAME);
+                expect(storedValue).to.equal(expected);
+                done();
+            });
+        });
+    });
+
     describe('pixels and extend', ()=>{
         let pixelStub, cookieSpy;
         before(()=>{

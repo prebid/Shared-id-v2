@@ -72,7 +72,9 @@ export default class PubcidHandler {
     }
 
     /**
-     * Retrieve pubcid.  Create it if it's not already there.
+     * Retrieve pubcid.  Create it if it's not already there.  Note that this may return a
+     * null even if a pubcid is created due to async nature of the consent checks.
+     * @deprecated
      * @returns {string} pubcid if exist.  Null otherwise.
      */
     fetchPubcid() {
@@ -82,17 +84,32 @@ export default class PubcidHandler {
 
     /**
      * Create/Extend pubcid if there is consent.  Delete pubcid if there isn't.
+     * @param {function} callback This function is passed pubcid value after consent check.
      */
-    updatePubcidWithConsent() {
-        const handler = this;
-        const callback = function (consent) {
+    updatePubcidWithConsent(callback) {
+        this.hasConsent((consent) => {
+            let pubcid = null;
             if (consent) {
-                handler.createPubcid();
+                this.createPubcid();
+                pubcid = this.readPubcid();
             } else {
-                handler.deletePubcid();
+                this.deletePubcid();
             }
-        };
-        this.hasConsent(callback);
+            if (typeof callback === 'function')
+                callback(pubcid);
+        });
+    }
+
+    /**
+     * Retrieve pubcid if there is consent.  Otherwise returns null.
+     * @param {function} callback This function is passed pubcid value after consent check.
+     */
+    readPubcidWithConsent(callback) {
+        this.hasConsent((consent) => {
+            const pubcid = consent ? this.readPubcid() : null;
+            if (typeof callback === 'function')
+                callback(pubcid);
+        });
     }
 
     /**
