@@ -1,7 +1,6 @@
 import {expect} from 'chai';
 import {createProxy, findCmpFrame} from "../../../src/lib/consenthandler/proxy/proxyFactory";
 import {TCF_API, TCF_FRAME} from "../../../src/lib/consenthandler/drivers/tcf";
-import {CMP_API, CMP_FRAME} from "../../../src/lib/consenthandler/drivers/cmp";
 
 function createLocatorFrame(locatorName){
     const iframe = document.createElement('iframe');
@@ -19,9 +18,7 @@ function removeLocatorFrame(locatorName){
 describe('proxyFactory', ()=>{
     after(()=>{
         delete window[TCF_API];
-        delete window[CMP_API];
         delete window[TCF_FRAME];
-        delete window[CMP_FRAME];
     });
 
     describe('findCmpFrame', ()=>{
@@ -51,9 +48,7 @@ describe('proxyFactory', ()=>{
     describe('CreateProxy', ()=>{
         beforeEach(() => {
             delete window[TCF_API];
-            delete window[CMP_API];
             delete window[TCF_FRAME];
-            delete window[CMP_FRAME];
         });
         it('empty proxy', ()=>{
             const result = createProxy();
@@ -66,22 +61,16 @@ describe('proxyFactory', ()=>{
             expect(result.driver.cmpApi).equals(TCF_API);
         });
         it('cmp local proxy', ()=>{
+            var CMP_API = "__cmp";
             window[CMP_API] = function(){};
             const result = createProxy();
-            expect(result).to.exist;
-            expect(result.driver.cmpApi).equals(CMP_API);
+            expect(result).to.not.exist;
         });
         it('tcf frame proxy', ()=>{
             window[TCF_FRAME] = {};
             const result = createProxy();
             expect(result).to.exist;
             expect(result.driver.cmpApi).equals(TCF_API);
-        });
-        it('cmp frame proxy', ()=>{
-            window[CMP_FRAME] = {};
-            const result = createProxy();
-            expect(result).to.exist;
-            expect(result.driver.cmpApi).equals(CMP_API);
         });
     });
 });
