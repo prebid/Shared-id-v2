@@ -1,6 +1,6 @@
 import log from './log';
-import {COOKIE, LOCAL_STORAGE} from "./constants";
-import {delCookie, getCookie, setCookie} from "./cookieUtils";
+import {COOKIE, LOCAL_STORAGE} from './constants';
+import {delCookie, getCookie, setCookie} from './cookieUtils';
 
 const EXP_SUFFIX = '_exp';
 
@@ -162,13 +162,54 @@ export function writeValue(type, name, value, expInterval, domain) {
  * Delete value from cookies or local storage
  * @param {string} type Storage type
  * @param {string} name Name of the item
+ * @param {string} domain Cookie cookieDomain
  */
-export function deleteValue(type, name) {
+export function deleteValue(type, name, domain) {
     if (name) {
         if (type === COOKIE) {
-            delCookie(name);
+            delCookie(name, domain, '/', 'Lax');
         } else if (type === LOCAL_STORAGE) {
             removeStorageItem(name);
         }
     }
+}
+
+/**
+ * Find the top most domain that a cookie can be stored.
+ * www.example.com => example.com
+ * news.example.co.za => example.co.za
+ *
+ * @param {string} hostname Usually document.location.hostname
+ * @returns {string} domain name
+ */
+export function extractDomain(hostname) {
+    const value = '' + Math.floor(Math.random()*10000);
+    const cookieName = `__dmtester_${value}`
+    const sameSite = 'Lax';
+    const parts = hostname.split('.');
+    let lastDomain;
+
+    for (let i = 0, len = parts.length; i < len; ++i) {
+        const currDomain = parts.slice(i).join('.');
+        setCookie(cookieName, value, 1, currDomain, '/', sameSite);
+        const cookieValue = getCookie(cookieName);
+
+        if (cookieValue) {
+            delCookie(cookieName, currDomain, '/', sameSite);
+
+            if (cookieValue === value) {
+                lastDomain = currDomain;
+            }
+            else {
+                // Unexpected result. Just use the default.
+                lastDomain = undefined;
+                break;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+    return lastDomain;
 }

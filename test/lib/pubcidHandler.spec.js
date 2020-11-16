@@ -1,11 +1,15 @@
-import {expect} from 'chai';
+import chai from 'chai';
 import sinon from "sinon";
+import sinonChai from 'sinon-chai';
 import PubcidHandler from '../../src/lib/pubcidHandler';
 import * as cookieUtils from "../../src/lib/cookieUtils";
+import * as storageUtils from '../../src/lib/storageUtils';
 import * as utils from '../../src/lib/utils';
 import {TCF_API} from '../../src/lib/consenthandler/drivers/tcf';
-import {writeValue} from "../../src/lib/storageUtils";
 import {COOKIE, LOCAL_STORAGE} from '../../src/lib/constants';
+
+chai.use(sinonChai);
+const expect = chai.expect;
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89a-f][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -15,6 +19,7 @@ describe('PubcidHandler', ()=> {
     const DEFAULT_OPTOUT_NAME = '_pubcid_optout';
 
     function clearAll() {
+        cookieUtils.clearAllCookies(window.location.hostname);
         cookieUtils.clearAllCookies();
 
         if (window.localStorage) {
@@ -89,7 +94,7 @@ describe('PubcidHandler', ()=> {
                 window.localStorage.setItem(DEFAULT_NAME, 'another_existing');
 
                 // When fetchPubcid is called
-                const handler = new PubcidHandler(options);
+                const handler = new PubcidHandler({consent: {type: 'iab'}, cookieDomain: ''} );
                 handler.fetchPubcid();
 
                 return new Promise((resolve) => {
@@ -202,7 +207,7 @@ describe('PubcidHandler', ()=> {
             window.localStorage.setItem(DEFAULT_OPTOUT_NAME, 1);
 
             // When fetchPubcid is called
-            const handler = new PubcidHandler({type: LOCAL_STORAGE});
+            const handler = new PubcidHandler({type: LOCAL_STORAGE, cookieDomain: ''});
             const pubcid = handler.fetchPubcid();
 
             // Then no pubcid should be returned
@@ -289,7 +294,7 @@ describe('PubcidHandler', ()=> {
         it('accidental write of undefined', () => {
             const key = 'test';
 
-            writeValue(LOCAL_STORAGE, key, undefined);
+            storageUtils.writeValue(LOCAL_STORAGE, key, undefined);
             const val = localStorage.getItem(key);
 
             expect(val).to.be.null;
@@ -439,7 +444,7 @@ describe('PubcidHandler', ()=> {
 
         it('existing pubcid without consent', (done)=>{
             // Given a default handler with existing pubcid, but without consent
-            const handler = new PubcidHandler();
+            const handler = new PubcidHandler({cookieDomain: ''});
             cookieUtils.setCookie(DEFAULT_NAME, 'some_random_value', 30);
             cookieUtils.setCookie(DEFAULT_OPTOUT_NAME, 1, 30);
             // When updatePubcidWithConsent is called
@@ -528,6 +533,11 @@ describe('PubcidHandler', ()=> {
             clearAll();
         });
 
+        after(()=>{
+            pixelStub.restore();
+            cookieSpy.restore();
+        })
+
         beforeEach(() => {
             pixelStub.resetHistory();
             cookieSpy.resetHistory();
@@ -538,7 +548,7 @@ describe('PubcidHandler', ()=> {
         });
 
         it('extend is enabled', () => {
-            const options = {type: COOKIE};
+            const options = {type: COOKIE, cookieDomain: ''};
 
             const handler = new PubcidHandler(options);
             let pubcid = handler.fetchPubcid();
@@ -564,13 +574,14 @@ describe('PubcidHandler', ()=> {
         });
 
         it('fire pixel once', () => {
-            const options = {type: COOKIE, extend: false, pixelUrl: '/any/url/'};
+            const options = {type: COOKIE, extend: false, pixelUrl: '/any/url/', cookieDomain: ''};
 
             const handler = new PubcidHandler(options);
             let pubcid = handler.fetchPubcid();
             expect(pubcid).to.match(uuidPattern);
             sinon.assert.callCount(cookieSpy, 1);
             sinon.assert.callCount(pixelStub, 1);
+            expect(cookieSpy.getCall(0).args[0]).to.equal('_pubcid');
 
             expect(pixelStub.getCall(0).args[0]).to.equal('/any/url/?id=' + encodeURIComponent('pubcid:' + pubcid));
 
@@ -578,10 +589,12 @@ describe('PubcidHandler', ()=> {
             handler.fetchPubcid();
             sinon.assert.callCount(cookieSpy, 1);
             sinon.assert.callCount(pixelStub, 1);
+            expect(cookieSpy.getCall(0).args[0]).to.equal('_pubcid');
+
         });
 
         it('fire pixel every time', () => {
-            const options = {type: COOKIE, extend: true, pixelUrl: '/any/url/'};
+            const options = {type: COOKIE, extend: true, pixelUrl: '/any/url/', cookieDomain: ''};
 
             const handler = new PubcidHandler(options);
             let pubcid = handler.fetchPubcid();
@@ -596,6 +609,53 @@ describe('PubcidHandler', ()=> {
             sinon.assert.callCount(cookieSpy, 1);
             sinon.assert.callCount(pixelStub, 2);
             expect(pixelStub.getCall(1).args[0]).to.equal('/any/url/?id=' + encodeURIComponent('pubcid:' + pubcid2));
+        });
+    });
+
+    describe('getDomain', ()=>{
+        let stub;
+
+        afterEach(()=>{
+            if (stub) stub.restore();
+        });
+
+        it('has cookieDomain', ()=>{
+            const expected = 'hello.cookie'
+            stub = sinon.stub(storageUtils, 'extractDomain');
+            const options = {cookieDomain: expected};
+            const handler = new PubcidHandler(options);
+            const domain = handler.getDomain(COOKIE);
+            expect(domain).to.equal(expected);
+            expect(stub).to.have.not.been.called;
+        });
+
+        it('call extractDomain', ()=>{
+            const expected = 'test123.com'
+            stub = sinon.stub(storageUtils, 'extractDomain').callsFake(()=>{return expected});
+            const handler = new PubcidHandler();
+            const domain = handler.getDomain(COOKIE);
+            expect(stub).to.have.been.calledOnce;
+            expect(domain).to.equal(expected);
+            expect(handler.cachedDomain).to.equal(expected);
+        });
+
+        it('use cachedDomain', ()=>{
+            const expected = 'abcd.org'
+            stub = sinon.stub(storageUtils, 'extractDomain');
+            const handler = new PubcidHandler();
+            handler.cachedDomain = expected;
+            const domain = handler.getDomain(COOKIE);
+            expect(domain).to.equal(expected);
+            expect(stub).to.have.not.been.called;
+        });
+
+        it('non-cookie storage', ()=>{
+            const expected = 'bogus.com'
+            stub = sinon.stub(storageUtils, 'extractDomain').callsFake(()=>{return expected});
+            const handler = new PubcidHandler();
+            const domain = handler.getDomain(LOCAL_STORAGE);
+            expect(stub).to.have.been.not.been.called;
+            expect(domain).to.be.undefined;
         });
     });
 });

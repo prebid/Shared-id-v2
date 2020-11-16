@@ -117,10 +117,11 @@ describe('value functions', ()=>{
         const cookieStub = sinon.stub(cookieUtils, 'delCookie');
         const storageStub = sinon.stub(Storage.prototype, 'removeItem');
         const keyName = 'ANY_KEY';
+        const domain = 'ANY.DOMAIN';
 
-        storage.deleteValue(COOKIE, keyName);
+        storage.deleteValue(COOKIE, keyName, domain);
 
-        expect(cookieStub).to.have.been.calledOnceWith(keyName);
+        expect(cookieStub).to.have.been.calledOnceWith(keyName, domain);
         expect(storageStub).to.have.not.been.called;
         cookieStub.restore();
         storageStub.restore();
@@ -147,10 +148,11 @@ describe('value functions', ()=>{
         const keyName = 'ANY_KEY';
         const value = 'ANY_VALUE';
         const interval = 42;
+        const domain = 'ANY.TEST.DOMAIN';
 
-        storage.writeValue(COOKIE, keyName, value, interval);
+        storage.writeValue(COOKIE, keyName, value, interval, domain);
 
-        expect(cookieStub).to.have.been.calledOnceWith(keyName, value, interval);
+        expect(cookieStub).to.have.been.calledOnceWith(keyName, value, interval, domain);
         expect(storageStub).to.have.not.been.called;
         cookieStub.restore();
         storageStub.restore();
@@ -173,4 +175,107 @@ describe('value functions', ()=>{
         cookieStub.restore();
     });
 
+});
+
+describe('extractDomain', ()=>{
+    let cookies = [];
+    let getStub, delStub, setStub;
+
+    /**
+     * Return a mock function for setting cookies
+     * @param levels Levels of TLD.  For ex, '.com' is 1, and '.co.za' is 2.
+     * @returns {function(*, *, *, *): void}
+     */
+    function genSetCookie(levels) {
+        return (name, value, expires, domain, path) => {
+            const domainParts = domain.split('.');
+            if (levels > 0 && domainParts.length > levels) {
+                // find existing ones first
+                const element = cookies.find(e => e.name === name && e.domain === domain && e.path === path);
+
+                if (element) {
+                    element.value = value;
+                }
+                else {
+                    const newElement = {
+                        name: name,
+                        value: value,
+                        domain: domain,
+                        path: path
+                    };
+                    cookies.push(newElement);
+                }
+            }
+        }
+    }
+
+    function mockGetCookie(name) {
+        const c = cookies.find(element => element.name === name);
+        return c ? c.value : undefined;
+    }
+
+    function mockDelCookie(name, domain, path) {
+        for (let i = 0; i < cookies.length; ++i) {
+            const element = cookies[i];
+            if (element.name === name && element.domain === domain && element.path === path) {
+                cookies.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    beforeEach(()=>{
+       cookies = [];
+       getStub = sinon.stub(cookieUtils, 'getCookie').callsFake(mockGetCookie);
+       delStub = sinon.stub(cookieUtils, 'delCookie').callsFake(mockDelCookie);
+    });
+
+    afterEach(()=>{
+        cookies = [];
+        if (setStub) setStub.restore();
+        getStub.restore();
+        delStub.restore();
+    });
+
+    it('1 tld with subdomain', ()=>{
+        setStub = sinon.stub(cookieUtils, 'setCookie').callsFake(genSetCookie(1));
+        const domain = storage.extractDomain('www.example.com');
+        expect(domain).to.equal('example.com');
+        expect(cookies).to.have.lengthOf(0);
+    });
+
+    it('1 tld without subdomain', ()=>{
+        setStub = sinon.stub(cookieUtils, 'setCookie').callsFake(genSetCookie(1));
+        const domain = storage.extractDomain('example.com');
+        expect(domain).to.equal('example.com');
+        expect(cookies).to.have.lengthOf(0);
+    });
+
+    it('2 tld with subdomain', ()=>{
+        setStub = sinon.stub(cookieUtils, 'setCookie').callsFake(genSetCookie(2));
+        const domain = storage.extractDomain('www.example.uk.com');
+        expect(domain).to.equal('example.uk.com');
+        expect(cookies).to.have.lengthOf(0);
+    });
+
+    it('3 tld with subdomain', ()=>{
+        setStub = sinon.stub(cookieUtils, 'setCookie').callsFake(genSetCookie(3));
+        const domain = storage.extractDomain('a.b.c.kobe.jp');
+        expect(domain).to.equal('b.c.kobe.jp');
+        expect(cookies).to.have.lengthOf(0);
+    });
+
+    it('3 tld without subdomain', ()=>{
+        setStub = sinon.stub(cookieUtils, 'setCookie').callsFake(genSetCookie(3));
+        const domain = storage.extractDomain('b.c.kobe.jp');
+        expect(domain).to.equal('b.c.kobe.jp');
+        expect(cookies).to.have.lengthOf(0);
+    });
+
+    it('international', ()=>{
+        setStub = sinon.stub(cookieUtils, 'setCookie').callsFake(genSetCookie(2));
+        const domain = storage.extractDomain('www.食狮.公司.cn');
+        expect(domain).to.equal('食狮.公司.cn');
+        expect(cookies).to.have.lengthOf(0);
+    });
 });

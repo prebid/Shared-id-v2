@@ -1,6 +1,6 @@
 import {isCookieSupported} from './cookieUtils';
 import {addQueryParam, copyOptions, firePixel, uuid4} from './utils';
-import {deleteValue, isStorageSupported, readValue, writeValue} from './storageUtils';
+import {deleteValue, extractDomain, isStorageSupported, readValue, writeValue} from './storageUtils';
 import ConsentHandler from "./consenthandler/consentHandler";
 import {COOKIE, LOCAL_STORAGE} from './constants';
 
@@ -15,7 +15,7 @@ export default class PubcidHandler {
             optoutName: '_pubcid_optout',
             expInterval: 525600, // 1 year in minutes
             create: true,
-            cookieDomain: '',
+            cookieDomain: undefined,
             type: 'html5,cookie',
             extend: true,
             pixelUrl: '',
@@ -27,6 +27,7 @@ export default class PubcidHandler {
 
         copyOptions(this.config, options);
 
+        this.cachedDomain = undefined;
         this.typeEnabled = null;
 
         if (typeof this.config.type === 'string') {
@@ -128,7 +129,7 @@ export default class PubcidHandler {
      * Create a new pubcid if it doesn't exist already.
      */
     createPubcid() {
-        const {name, create, expInterval, cookieDomain, extend, pixelUrl} = this.config;
+        const {name, create, expInterval, extend, pixelUrl} = this.config;
         let pubcid = readValue(this.typeEnabled, this.config.name);
 
         if (!pubcid) {
@@ -137,14 +138,16 @@ export default class PubcidHandler {
                     pubcid = readValue(COOKIE, name);
                 if (!pubcid)
                     pubcid = uuid4();
-                writeValue(this.typeEnabled, name, pubcid, expInterval, cookieDomain);
+
+                writeValue(this.typeEnabled, name, pubcid, expInterval, this.getDomain(this.typeEnabled));
             }
             this.getPixel(pubcid);
         } else if (extend) {
             if (pixelUrl)
                 this.getPixel(pubcid);
-            else
-                writeValue(this.typeEnabled, name, pubcid, expInterval, cookieDomain);
+            else {
+                writeValue(this.typeEnabled, name, pubcid, expInterval, this.getDomain(this.typeEnabled));
+            }
         }
     }
 
@@ -153,10 +156,10 @@ export default class PubcidHandler {
      * @param {boolean} all If true, then delete pubcid from all storage types
      */
     deletePubcid({all = true} = {}) {
-        const name = this.config.name;
+        const {name} = this.config;
         if (all) {
-            deleteValue(COOKIE, name);
-            deleteValue(LOCAL_STORAGE, name);
+            deleteValue(COOKIE, name, this.getDomain(COOKIE));
+            deleteValue(LOCAL_STORAGE, name, this.getDomain(LOCAL_STORAGE));
         } else {
             deleteValue(this.typeEnabled, name);
         }
@@ -170,5 +173,28 @@ export default class PubcidHandler {
     readPubcid({any = true} = {}) {
         const name = this.config.name;
         return any ? readValue(COOKIE, name) || readValue(LOCAL_STORAGE, name) : readValue(this.typeEnabled, name);
+    }
+
+    /**
+     * Get the domain for writing/deleting cookies.  This can either be the cookieDomain defined in the
+     * config, or calculated dynamically by writing test cookies.
+     *
+     * @param {string} [type] Storage type.  Any type besides COOKIE will get undefined as result.
+     *  Local storage doesn't need specify domain.
+     * @returns {string|any}
+     */
+    getDomain(type = COOKIE) {
+        if (type === COOKIE) {
+            if (this.config.cookieDomain !== undefined) {
+                return this.config.cookieDomain;
+            }
+            else if (this.cachedDomain !== undefined) {
+                return this.cachedDomain
+            }
+            else {
+                this.cachedDomain = extractDomain(document.location.hostname);
+                return this.cachedDomain;
+            }
+        }
     }
 }
