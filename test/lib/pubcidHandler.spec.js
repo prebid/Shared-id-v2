@@ -4,7 +4,6 @@ import PubcidHandler from '../../src/lib/pubcidHandler';
 import * as cookieUtils from "../../src/lib/cookieUtils";
 import * as utils from '../../src/lib/utils';
 import {TCF_API} from '../../src/lib/consenthandler/drivers/tcf';
-import {CMP_API, CMP_GET_CONSENT_CMD, CMP_GET_VENDOR_CMD} from '../../src/lib/consenthandler/drivers/cmp';
 import {writeValue} from "../../src/lib/storageUtils";
 import {COOKIE, LOCAL_STORAGE} from '../../src/lib/constants';
 
@@ -30,7 +29,6 @@ describe('PubcidHandler', ()=> {
 
         afterEach(() => {
             if (window[TCF_API]) delete window[TCF_API];
-            if (window[CMP_API]) delete window[CMP_API];
             clearAll();
         });
 
@@ -112,106 +110,6 @@ describe('PubcidHandler', ()=> {
             it('TCF failed', () => {
                 window[TCF_API] = (cmd, args, callback) => {
                     callback(mockResult(true), false);
-                };
-
-                const handler = new PubcidHandler({consent: {type: 'iab', alwaysCallback: false}});
-                handler.fetchPubcid();
-
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        resolve(handler.readPubcid());
-                    }, 200);
-                }).then((pubcid) => {
-                    expect(pubcid).to.be.null;
-                });
-            });
-        });
-
-        describe("CMP enabled", () => {
-            const sampleData = {
-                [CMP_GET_CONSENT_CMD]: {
-                    gdprApplies: true,
-                    hasGlobalScope: false,
-                    consentData: '12345_67890'
-                },
-                [CMP_GET_VENDOR_CMD]: {
-                    metadata: '09876_54321',
-                    gdprApplies: true,
-                    hasGlobalScope: false,
-                    purposeConsents: {
-                        1: true
-                    }
-                }
-            };
-
-            const options = {consent: {type: 'iab'}};
-            it('with consent', () => {
-                window[CMP_API] = function (cmd, arg, callback) {
-                    if (sampleData[cmd])
-                        callback(sampleData[cmd], true);
-                    else
-                        callback(null, false);
-                };
-
-                const handler = new PubcidHandler(options);
-                handler.fetchPubcid();
-
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        resolve(handler.readPubcid());
-                    }, 200);
-                }).then((pubcid) => {
-                    expect(pubcid).to.match(uuidPattern);
-                });
-            });
-
-            it('without consent', () => {
-                window[CMP_API] = (cmd, args, callback) => {
-                    if (cmd === CMP_GET_VENDOR_CMD)
-                        callback({purposeConsents: {1: false}}, true);
-                    else if (sampleData[cmd])
-                        callback(sampleData[cmd], true);
-                    else
-                        callback(null, false);
-                };
-
-                const handler = new PubcidHandler(options);
-                handler.fetchPubcid();
-
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        resolve(handler.readPubcid());
-                    }, 200);
-                }).then((pubcid) => {
-                    expect(pubcid).to.be.null;
-                });
-            });
-
-            it('cmp failed', () => {
-                window[CMP_API] = (cmd, args, callback) => {
-                    callback(null, false);
-                };
-
-                const handler = new PubcidHandler({consent: {type: 'iab', alwaysCallback: false}});
-                handler.fetchPubcid();
-
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        resolve(handler.readPubcid());
-                    }, 200);
-                }).then((pubcid) => {
-                    expect(pubcid).to.be.null;
-                });
-            });
-
-            it('cmp partial failure', () => {
-                window[CMP_API] = (cmd, args, callback) => {
-                    if (cmd === CMP_GET_VENDOR_CMD)
-                        callback(null, false);
-                    else if (sampleData[cmd])
-                        callback(sampleData[cmd], true);
-                    else
-                        callback(null, false);
                 };
 
                 const handler = new PubcidHandler({consent: {type: 'iab', alwaysCallback: false}});
