@@ -184,29 +184,49 @@ export function deleteValue(type, name, domain) {
  */
 export function extractDomain(hostname) {
     const value = '' + Math.floor(Math.random()*10000);
-    const cookieName = `__dmtester_${value}`
-    const sameSite = 'Lax';
+    const cookieName = `__dmtester_${value}`;
+    const sameSite = 'Lax';  // Make firefox happy
     const parts = hostname.split('.');
     let lastDomain;
 
+    // Start with writing a test cookie in the full domain.  If successful,
+    // move on to the shorter domain until test cookie no longer works.
+    // The last domain prior to the failure is the base domain.
+    // For example:
+    // Loop 0: www.example.com  success.  continue.
+    // Loop 1: example.com      success.  continue.
+    // Loop 2: com              failed.  stop.
+    //
+    // This is a alternative to a full suffix list library such as psl.
+    // The upside is a much smaller footprint.  The downsides are additional cycles,
+    // and warning messages on some browsers such as firefox due to failed tests.
+
     for (let i = 0, len = parts.length; i < len; ++i) {
+        // Construct the domain name for this iteration
         const currDomain = parts.slice(i).join('.');
+        // Set a test cookie that expires in 1 minute, which should be plenty of time
         setCookie(cookieName, value, 1, currDomain, '/', sameSite);
+        // Attempt to read back the value that was just stored
         const cookieValue = getCookie(cookieName);
 
         if (cookieValue) {
+            // Clean up first so the test cookies aren't left around
             delCookie(cookieName, currDomain, '/', sameSite);
 
             if (cookieValue === value) {
+                // Test is successful, save the domain name, and move on to the next
+                // shorter domain.
                 lastDomain = currDomain;
             }
             else {
-                // Unexpected result. Just use the default.
+                // Unexpected result. Just return undefined.
                 lastDomain = undefined;
                 break;
             }
         }
         else {
+            // Cookie failed.  Meaning the last saved domain is the top most
+            // domain that a cookie can be written to.
             break;
         }
     }
