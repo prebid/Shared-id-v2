@@ -29,7 +29,7 @@ export function setupPubcid(w, d, options = {}) {
     };
 
     PublisherCommonId.createId = function() {
-        _handler.createPubcid({force: true});
+        _handler.createPubcid();
     };
 
     PublisherCommonId.deleteId = function() {

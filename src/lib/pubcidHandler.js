@@ -1,10 +1,8 @@
-import {getCookie, isCookieSupported, setCookie, delCookie} from './cookieUtils';
-import {uuid4, addQueryParam, firePixel, copyOptions} from './utils';
-import {getStorageItem, isStorageSupported, setStorageItem, removeStorageItem} from './storageUtils';
+import {isCookieSupported} from './cookieUtils';
+import {addQueryParam, copyOptions, firePixel, uuid4} from './utils';
+import {deleteValue, extractDomain, isStorageSupported, readValue, writeValue} from './storageUtils';
 import ConsentHandler from "./consenthandler/consentHandler";
-
-const COOKIE = 'cookie';
-const LOCAL_STORAGE = 'html5';
+import {COOKIE, LOCAL_STORAGE} from './constants';
 
 /**
  * Helper to retrieve pubcid (aka: fpc)
@@ -17,7 +15,7 @@ export default class PubcidHandler {
             optoutName: '_pubcid_optout',
             expInterval: 525600, // 1 year in minutes
             create: true,
-            cookieDomain: '',
+            cookieDomain: undefined,
             type: 'html5,cookie',
             extend: true,
             pixelUrl: '',
@@ -29,6 +27,7 @@ export default class PubcidHandler {
 
         copyOptions(this.config, options);
 
+        this.cachedDomain = undefined;
         this.typeEnabled = null;
 
         if (typeof this.config.type === 'string') {
@@ -40,8 +39,7 @@ export default class PubcidHandler {
                         this.typeEnabled = COOKIE;
                         break;
                     }
-                }
-                else if (name === LOCAL_STORAGE) {
+                } else if (name === LOCAL_STORAGE) {
                     if (isStorageSupported()) {
                         this.typeEnabled = LOCAL_STORAGE;
                         break;
@@ -60,80 +58,24 @@ export default class PubcidHandler {
         let consentHandler = new ConsentHandler(this.config.consent);
 
         if (optoutName) {
-            const optout = this.readValue(optoutName, COOKIE) || this.readValue(optoutName, LOCAL_STORAGE);
+            const optout = readValue(COOKIE, optoutName) || readValue(LOCAL_STORAGE, optoutName);
             if (optout) {
                 callback(false);
                 return;
             }
         }
 
-        if(consentHandler.consentEnabled()){
+        if (consentHandler.consentEnabled()) {
             consentHandler.hasStorageConsent(callback);
-        }
-        else {
+        } else {
             callback(true);
         }
     }
 
     /**
-     * Read a value by checking cookies first and then local storage.
-     * @param {string} name Name of the item
-     * @param {string} type Override of type
-     * @returns {string|null} a string if item exists
-     */
-    readValue(name, type) {
-        let value;
-        if (!type)
-            type = this.typeEnabled;
-
-        if (type === COOKIE) {
-            value = getCookie(name);
-        }
-        else if (type === LOCAL_STORAGE) {
-            value = getStorageItem(name);
-        }
-
-        if (value === 'undefined' || value === 'null')
-            return null;
-
-        return value;
-    }
-
-    /**
-     * Write a value to cookies or local storage
-     * @param {string} name Name of the item
-     * @param {string} value Value to be stored
-     * @param {number} expInterval Expiry time in minutes
-     * @param {string} domain Cookie cookieDomain
-     */
-    writeValue(name, value, expInterval, domain) {
-        if (name && value) {
-            if (this.typeEnabled === COOKIE) {
-                setCookie(name, value, expInterval, domain, '/', 'Lax');
-            }
-            else if (this.typeEnabled === LOCAL_STORAGE) {
-                setStorageItem(name, value, expInterval);
-            }
-        }
-    }
-
-    /**
-     * Delete value from cookies or local storage
-     * @param {string} name Name of the item
-     */
-    deleteValue(name) {
-        if (name) {
-            if (this.typeEnabled === COOKIE) {
-                delCookie(name);
-            }
-            else if (this.typeEnabled === LOCAL_STORAGE) {
-                removeStorageItem(name);
-            }
-        }
-    }
-
-    /**
-     * Retrieve pubcid.  Create it if it's not already there.
+     * Retrieve pubcid.  Create it if it's not already there.  Note that this may return a
+     * null even if a pubcid is created due to async nature of the consent checks.
+     * @deprecated
      * @returns {string} pubcid if exist.  Null otherwise.
      */
     fetchPubcid() {
@@ -143,17 +85,32 @@ export default class PubcidHandler {
 
     /**
      * Create/Extend pubcid if there is consent.  Delete pubcid if there isn't.
+     * @param {function} callback This function is passed pubcid value after consent check.
      */
-    updatePubcidWithConsent() {
-        const handler = this;
-        const callback = function(consent){
-            if(consent){
-                handler.createPubcid();
+    updatePubcidWithConsent(callback) {
+        this.hasConsent((consent) => {
+            let pubcid = null;
+            if (consent) {
+                this.createPubcid();
+                pubcid = this.readPubcid();
             } else {
-                handler.deletePubcid();
+                this.deletePubcid();
             }
-        };
-        this.hasConsent(callback);
+            if (typeof callback === 'function')
+                callback(pubcid);
+        });
+    }
+
+    /**
+     * Retrieve pubcid if there is consent.  Otherwise returns null.
+     * @param {function} callback This function is passed pubcid value after consent check.
+     */
+    readPubcidWithConsent(callback) {
+        this.hasConsent((consent) => {
+            const pubcid = consent ? this.readPubcid() : null;
+            if (typeof callback === 'function')
+                callback(pubcid);
+        });
     }
 
     /**
@@ -171,33 +128,41 @@ export default class PubcidHandler {
     /**
      * Create a new pubcid if it doesn't exist already.
      */
-    createPubcid({force = false} = {}) {
-        const {name, create, expInterval, cookieDomain, extend, pixelUrl} = this.config;
-        let pubcid = this.readValue(this.config.name);
+    createPubcid() {
+        const {name, create, expInterval, extend, pixelUrl} = this.config;
+        let pubcid = readValue(this.typeEnabled, this.config.name);
 
         if (!pubcid) {
-            if (create || force) {
+            if (create) {
                 if (this.typeEnabled === LOCAL_STORAGE)
-                    pubcid = this.readValue(name, COOKIE);
+                    pubcid = readValue(COOKIE, name);
                 if (!pubcid)
                     pubcid = uuid4();
-                this.writeValue(name, pubcid, expInterval, cookieDomain);
+
+                writeValue(this.typeEnabled, name, pubcid, expInterval, this.getDomain(this.typeEnabled));
             }
             this.getPixel(pubcid);
-        }
-        else if (extend){
+        } else if (extend) {
             if (pixelUrl)
                 this.getPixel(pubcid);
-            else
-                this.writeValue(name, pubcid, expInterval, cookieDomain);
+            else {
+                writeValue(this.typeEnabled, name, pubcid, expInterval, this.getDomain(this.typeEnabled));
+            }
         }
     }
 
     /**
      * Delete pubcid
+     * @param {boolean} all If true, then delete pubcid from all storage types
      */
-    deletePubcid() {
-        this.deleteValue(this.config.name);
+    deletePubcid({all = true} = {}) {
+        const {name} = this.config;
+        if (all) {
+            deleteValue(COOKIE, name, this.getDomain(COOKIE));
+            deleteValue(LOCAL_STORAGE, name, this.getDomain(LOCAL_STORAGE));
+        } else {
+            deleteValue(this.typeEnabled, name);
+        }
     }
 
     /**
@@ -206,11 +171,30 @@ export default class PubcidHandler {
      * @returns {string|null} pubcid if it exists.
      */
     readPubcid({any = true} = {}) {
-        if (any) {
-            return this.readValue(this.config.name, COOKIE) || this.readValue(this.config.name, LOCAL_STORAGE);
-        }
-        else {
-            return this.readValue(this.config.name);
+        const name = this.config.name;
+        return any ? readValue(COOKIE, name) || readValue(LOCAL_STORAGE, name) : readValue(this.typeEnabled, name);
+    }
+
+    /**
+     * Get the domain for writing/deleting cookies.  This can either be the cookieDomain defined in the
+     * config, or calculated dynamically by writing test cookies.
+     *
+     * @param {string} [type] Storage type.  Any type besides COOKIE will get undefined as result.
+     *  Local storage doesn't need specify domain.
+     * @returns {string|any}
+     */
+    getDomain(type = COOKIE) {
+        if (type === COOKIE) {
+            if (this.config.cookieDomain !== undefined) {
+                return this.config.cookieDomain;
+            }
+            else if (this.cachedDomain !== undefined) {
+                return this.cachedDomain
+            }
+            else {
+                this.cachedDomain = extractDomain(document.location.hostname);
+                return this.cachedDomain;
+            }
         }
     }
 }

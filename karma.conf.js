@@ -18,6 +18,7 @@ module.exports = (config) => {
         reporters: ['mocha', 'bamboo'],
 
         browsers: ['ChromeHeadlessNoSandbox'],
+        //browsers: ['Safari'],
         customLaunchers: {
             ChromeHeadlessNoSandbox: {
                 base: 'ChromeHeadless',

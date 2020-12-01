@@ -1,19 +1,15 @@
 import {Tcf} from "../drivers/tcf";
-import {Cmp} from "../drivers/cmp";
 import {LocalProxy} from "./localProxy";
 import {SafeFrameProxy} from "./safeFrameProxy";
 import {FrameProxy} from "./frameProxy";
 
 /**
- * Figure out which driver to use for the site.  TCF driver takes priority over CMP
+ * Create the driver to use for the site.
  * @returns {*}
  */
 export function createProxy() {
     let proxy;
     proxy = _createProxy(new Tcf());
-    if (!proxy) {
-        proxy = _createProxy(new Cmp());
-    }
     return proxy;
 }
 
