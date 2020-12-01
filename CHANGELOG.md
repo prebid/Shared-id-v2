@@ -2,6 +2,11 @@
 Notable changes to the project
 
 ## [Unreleased]
+## [1.4.0] - 2020-12-1
+### Changed
+- Remove CMP v1 support
+- Reader should also check consent and optout
+- Add support to determine TLD for cookies
 
 ## [1.3.3] - 2020-07-27
 ### Changed
