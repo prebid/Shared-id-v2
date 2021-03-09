@@ -37,9 +37,7 @@ module.exports = (env = {}, args = {}) => {
                             presets: [['@babel/preset-env', {modules: 'cjs'}]],
 
                             plugins: [
-                                ['@babel/plugin-transform-runtime', {
-                                    corejs: 3
-                                }]
+                                ['@babel/plugin-transform-runtime', { corejs: 3 }],
                             ],
                         },
                     }
