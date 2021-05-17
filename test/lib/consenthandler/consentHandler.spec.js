@@ -94,6 +94,59 @@ describe('Consent Handler', ()=>{
                 });
             });
 
+            it('null event status', ()=>{
+                const resultData = {
+                    cmpStatus: 'loaded',
+                    eventStatus: null,
+                    gdprApplies: false,
+                    tcString: '12345_67890'
+                };
+
+                window[TCF_API] = function(cmd, version, callback) {
+                    callback(resultData, true);
+                };
+
+                const consentHandler = new ConsentHandler();
+
+                return new Promise((resolve) => {
+                    consentHandler.checkConsent((result, success) => {
+                        resolve([result, success]);
+                    });
+                }).then((args) => {
+                    expect(args[1]).to.be.true;
+                    expect(args[0].gdprApplies).to.be.false;
+                    expect(args[0].consentString).to.equal(sampleTCData.tcString);
+                    expect(args[0].hasStorageAccess).to.be.undefined;
+                });
+            });
+
+            it('multiple server responses', ()=>{
+                const result_1 = { cmpStatus: 'stub', eventStatus: null, gdprApplies: true, tcString: '12345_67890'};
+                const result_2 = { cmpStatus: 'loading', eventStatus: null, gdprApplies: true, tcString: '12345_67890', listenerId: 7};
+                const result_3 = { cmpStatus: 'loaded', eventStatus: null, gdprApplies: true, tcString: '12345_67890', listenerId: 7};
+                const result_4 = { cmpStatus: 'loaded', eventStatus: 'tcloaded', gdprApplies: true, tcString: '12345_67890', listenerId: 7};
+
+                window[TCF_API] = function(cmd, version, callback) {
+                    callback(result_1, true);
+                    callback(result_2, true);
+                    callback(result_3, true);
+                    callback(result_4, true);
+                };
+
+                const consentHandler = new ConsentHandler();
+
+                return new Promise((resolve) => {
+                    consentHandler.checkConsent((result, success) => {
+                        resolve([result, success]);
+                    });
+                }).then((args) => {
+                    expect(args[1]).to.be.true;
+                    expect(args[0].gdprApplies).to.be.true;
+                    expect(args[0].consentString).to.equal(result_4.tcString);
+                    expect(args[0].hasStorageAccess).to.be.undefined;
+                });
+            });
+
             it('verify version', ()=> {
                 return new Promise((resolve) => {
                     window[TCF_API] = function(cmd, version) {

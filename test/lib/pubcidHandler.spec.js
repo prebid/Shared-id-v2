@@ -37,16 +37,16 @@ describe('PubcidHandler', ()=> {
             clearAll();
         });
 
-        describe("TCF enabled", () => {
+        function mockResult(hasConsent) {
+            return {
+                cmpStatus: 'loaded',
+                eventStatus: 'tcloaded',
+                gdprApplies: true,
+                purpose: {consents: {1: hasConsent}}
+            };
+        }
 
-            function mockResult(hasConsent) {
-                return {
-                    cmpStatus: 'loaded',
-                    eventStatus: 'tcloaded',
-                    gdprApplies: true,
-                    purpose: {consents: {1: hasConsent}}
-                };
-            }
+        describe("TCF enabled", () => {
 
             const options = {consent: {type: 'iab'}};
             it('with consent', () => {
@@ -149,7 +149,6 @@ describe('PubcidHandler', ()=> {
 
             it('without consent', () => {
                 window[TCF_API] = (cmd, args, callback) => {
-                    callback({gdprApplies: true, publisher: {consents: {1: false}}});
                     callback(mockResult(false), true);
                 };
 
@@ -161,7 +160,7 @@ describe('PubcidHandler', ()=> {
                         resolve(handler.readPubcid());
                     }, 200);
                 }).then((pubcid) => {
-                    expect(pubcid).to.match(uuidPattern);
+                    expect(pubcid).to.be.null;
                 });
             });
         });
