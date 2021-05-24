@@ -2,6 +2,7 @@ import {Tcf} from "../drivers/tcf";
 import {LocalProxy} from "./localProxy";
 import {SafeFrameProxy} from "./safeFrameProxy";
 import {FrameProxy} from "./frameProxy";
+import log from 'loglevel';
 
 /**
  * Create the driver to use for the site.
@@ -54,10 +55,13 @@ function _createProxy(driver) {
 
     let proxy;
     if (typeof fCmp === 'function') {
+        log.debug('Using local proxy');
         proxy = new LocalProxy(fCmp, driver);
     } else if (window.$sf && window.$sf.ext && window.$sf.ext[driver.safeframeCall]) {
+        log.debug('Using safe frame proxy');
         proxy = new SafeFrameProxy(driver);
     } else {
+        log.debug('Using frame proxy');
         const frame = findCmpFrame(driver.locatorFrame);
         if (frame) {
             proxy = new FrameProxy(frame, driver);

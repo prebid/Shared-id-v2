@@ -1,3 +1,5 @@
+import log from 'loglevel';
+
 export class BaseProxy {
     constructor(driver) {
         this.driver = driver;
@@ -9,13 +11,10 @@ export class BaseProxy {
      */
     fetchConsentData(timeout) {
         const cmd = this.driver.getListenerCmd();
-        const removeCmd = this.driver.getRmListenerCmd();
         if (cmd) {
-            this.sendCmpRequests(cmd, (result, success) => {
-                const listenerId = this.driver.fetchDataCallback(result, success);
-                if (listenerId && removeCmd) {
-                    this.sendCmpRequests(removeCmd, () => {}, listenerId);
-                }
+            this.sendCmpRequests(cmd, (result, success) =>{
+                log.debug('Received CMP server response', success, JSON.stringify(result));
+                this.driver.fetchDataCallback(result, success);
             }, timeout);
         }
     }
@@ -31,59 +30,26 @@ export class BaseProxy {
     /**
      * call the api to get the consent data.  Since it can take multiple api requests to get all the data needed
      * create a promise for each command so it can be done it parallel.
-     * @param requests
-     * @param callback
-     * @param timeout
+     * @param requests array of all the requests to make
+     * @param callback called with an array of all the request responses
+     * @param timeout timeout value for all the requests to finish
      */
     sendCmpRequests(requests, callback, timeout = 30000) {
-        const promiseList = [];
         // A cmp driver is required
         if (!this.driver) {
             callback(Error('No CMP/TCF found'), false);
         }
 
-        // Build a list of promises based on the requests
         requests.forEach((req) => {
-            promiseList.push(new Promise((resolve, reject) => {
-                this.callApi(req[0], req[1], (result, success) => {
-                    if (success) {
-                        resolve(result);
-                    }
-                    else {
-                        reject(Error('Consent request ' + req + " failed"));
-                    }
-                });
-            }));
+            this.callApi(req[0], req[1], callback);
         });
 
-        // Wait for all the promises to complete within time limit
-        this.watchTimeout(Promise.all(promiseList), timeout).then((r) => {
-            callback(r, true);
-        }).catch((e) => {
-            callback(e, false);
-        });
-    }
-
-    /**
-     * Set up a timeout for a promise.  If the promise completes first, then
-     * timeout is ignored.  Otherwise if timeout occurred first, then
-     * the promise is ignored.
-     *
-     * @param promise
-     * @param interval Timeout in ms
-     * @return {Promise<*>}
-     */
-    watchTimeout(promise, interval) {
-        // setup a promise that fails after interval
-        const watcher = new Promise((resolve, reject) => {
-            const tout = setTimeout(() => {
-                clearTimeout(tout);
-                reject(Error('Timeout ' + interval + ' ms'));
-            }, interval);
-        });
-
-        // whichever completes first wins
-        return Promise.race([promise, watcher]);
+        setTimeout(()=>{
+            if (this.driver.cmpSuccess === undefined){
+                log.debug('Timedout waiting for CMP server');
+                this.driver.fetchDataCallback(undefined, false);
+            }
+        }, timeout);
     }
 }
 
