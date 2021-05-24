@@ -1,6 +1,6 @@
 {
   "name": "pubcid",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Publisher Common ID",
   "scripts": {
     "lint": "eslint src/**/*.js",
@@ -50,7 +50,9 @@
     "webpack-dev-server": "^3.10.3"
   },
   "dependencies": {
-    "@babel/runtime-corejs3": "^7.9.6"
+    "@babel/runtime-corejs3": "^7.9.6",
+    "loglevel": "^1.7.1",
+    "loglevel-plugin-prefix": "^0.8.4"
   },
   "main": "dist/index.js",
   "module": "src/index.js",

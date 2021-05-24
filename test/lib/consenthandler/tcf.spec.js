@@ -52,7 +52,7 @@ describe ('Tcf Driver', ()=>{
         expect(tcf.consentCallbackList.length).equals(1);
     });
     it('test getConsent with data', ()=>{
-        const testData = [{cmpStatus: 'loaded', eventStatus: 'useractioncomplete', gdprApplies: true, tcString: 'somestring', publisher: {consents: {1: true}}}];
+        const testData = {cmpStatus: 'loaded', eventStatus: 'useractioncomplete', gdprApplies: true, tcString: 'somestring', publisher: {consents: {1: true}}};
 
         tcf.fetchDataCallback(testData, true);
 
@@ -64,11 +64,11 @@ describe ('Tcf Driver', ()=>{
             expect(result.version).to.equal(2);
             expect(result.gdprApplies).to.equal(true);
             expect(result.consentString).to.equal('somestring');
-            expect(result).to.have.deep.property('tcData', testData[0]);
+            expect(result).to.have.deep.property('tcData', testData);
         });
     });
     it('test getConsent delayed loading', ()=>{
-        const testData = [{cmpStatus: 'loaded', eventStatus: 'useractioncomplete', gdprApplies: true, tcString: 'somestring', publisher: {consents: {5: true}}}];
+        const testData = {cmpStatus: 'loaded', eventStatus: 'useractioncomplete', gdprApplies: true, tcString: 'somestring', publisher: {consents: {5: true}}};
 
         return new Promise((resolve) => {
             tcf.getConsent((result) => {
@@ -80,7 +80,28 @@ describe ('Tcf Driver', ()=>{
             expect(result.version).to.equal(2);
             expect(result.gdprApplies).to.equal(true);
             expect(result.consentString).to.equal('somestring');
-            expect(result).to.have.deep.property('tcData', testData[0]);
+            expect(result).to.have.deep.property('tcData', testData);
         });
+    });
+
+    it('clear queue on updates', ()=>{
+        const testData = {cmpStatus: 'loaded', eventStatus: 'useractioncomplete', gdprApplies: true, tcString: 'somestring', publisher: {consents: {5: true}}};
+        const expectedResult = {version: TCF_API_VERSION, gdprApplies: true, consentString: testData.tcString, hasStorageAccess: undefined, tcData: testData};
+        expect(tcf.consentCallbackList).to.have.lengthOf(0);
+        tcf.getConsent(()=>{});
+        tcf.getConsent(()=>{});
+        expect(tcf.consentCallbackList).to.have.lengthOf(2);
+        tcf.fetchDataCallback(null, false);
+        expect(tcf.consentCallbackList).to.have.lengthOf(0);
+        tcf.getConsent((tcData, success) =>{
+            expect(success).to.be.false;
+            expect(tcData).deep.equal({version: TCF_API_VERSION});
+        });
+        tcf.fetchDataCallback(testData, true);
+        tcf.getConsent((tcData, success) =>{
+            expect(success).to.be.true;
+            expect(tcData).deep.equal(expectedResult);
+        });
+        expect(tcf.consentCallbackList).to.have.lengthOf(0);
     });
 });

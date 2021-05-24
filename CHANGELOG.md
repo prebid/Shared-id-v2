@@ -2,6 +2,8 @@
 Notable changes to the project
 
 ## [Unreleased]
+## [1.4.1] - 2021-5-24
+- Updated consenthandler to keep listening for updates
 ## [1.4.0] - 2020-12-1
 ### Changed
 - Remove CMP v1 support

@@ -42,6 +42,7 @@ module.exports = (config) => {
             reporters: [
                 {type: 'text'},
                 {type: 'html'},
+                {type: 'lcov', dir: 'coverage/lcov', subdir: '.', file: 'lcov.dat'},
                 {type: 'clover', dir: 'coverage', subdir: '.', file: 'clover.xml'}
             ]
         },

@@ -1,4 +1,5 @@
 import {createProxy} from "./proxy/proxyFactory";
+import log from 'loglevel';
 
 export default class ConsentHandler{
     constructor(option = {}){
@@ -8,6 +9,7 @@ export default class ConsentHandler{
             type: 'iab'
         };
         Object.assign(this.config, option);
+        log.debug('Config', JSON.stringify(this.config));
         if (this.config.type === 'iab') {
             this.proxy = createProxy();
             if (this.proxy) {
@@ -23,14 +25,17 @@ export default class ConsentHandler{
     checkConsent(callback){
         if (this.consentEnabled()) {
             if (this.proxy) {
+                log.debug('checking Consent');
                 this.proxy.getConsent(callback);
             }
             else {
+                log.debug('No proxy available for CMP');
                 // Cmp required but unable to connect.  Return unsure.
                 callback({});
             }
         }
         else {
+            log.debug('consent not enabled');
             // Since cmp is not required, return a result that says gdprApplies is false
             callback({ gdprApplies: false });
         }
