@@ -5,7 +5,7 @@ WORKDIR /var/build
 
 RUN node -v && \
      npm -v && \
-     npm install npm@latest -g && \
+     npm install npm@6 -g && \
      npm config set registry http://vault.cnvrmedia.net/nexus/content/groups/npm-all/ && \
      npm install --unsafe-perm && \
      npm cache verify
