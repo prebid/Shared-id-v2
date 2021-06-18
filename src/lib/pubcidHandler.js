@@ -85,7 +85,7 @@ export default class PubcidHandler {
 
     /**
      * Create/Extend pubcid if there is consent.  Delete pubcid if there isn't.
-     * @param {function} callback This function is passed pubcid value after consent check.
+     * @param {function} [callback] This function is passed pubcid value after consent check.
      */
     updatePubcidWithConsent(callback) {
         this.hasConsent((consent) => {
