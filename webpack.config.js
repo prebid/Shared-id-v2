@@ -1,9 +1,13 @@
 'use strict';
 
+const Webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackExcludeAssetsPlugin = require('html-webpack-exclude-assets-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+const pkg = require('./package.json');
+const spdx_banner = `pubcid.js ${pkg.version} - https://github.com/conversant/pubcid.js\nSPDX-License-Identifier: Apache-2.0`
 
 module.exports = (env = {}, args = {}) => {
     const mode = args.mode;
@@ -48,7 +52,10 @@ module.exports = (env = {}, args = {}) => {
             new CleanWebpackPlugin(
                 // Only clean up files related to scripts before build
                 {cleanOnceBeforeBuildPatterns: ['pubcid.*', 'stats.json']}
-            )
+            ),
+            new Webpack.BannerPlugin({
+                banner: spdx_banner,
+            })
         ]
         ,
         devServer: {
@@ -88,7 +95,10 @@ module.exports = (env = {}, args = {}) => {
             new CleanWebpackPlugin(
                 // Only clean up files related to library before build
                 {cleanOnceBeforeBuildPatterns: ['index.*']}
-            )
+            ),
+            new Webpack.BannerPlugin({
+                banner: spdx_banner,
+            })
         ],
         devtool: mapType
     };
