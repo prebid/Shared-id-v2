@@ -1,5 +1,5 @@
 # pubcid.js
-Publisher Common ID client-side javascript
+SharedId (FKA Publisher Common ID) client-side javascript
 
 ## Overview
 
