@@ -3,9 +3,9 @@ Publisher Common ID client-side javascript
 
 ## Overview
 
-Publisher Common ID (PubCID) is a privacy centric first party cookie solution. Built with consumer privacy in mind. PubCID does not sync IDs across domains so the IDs your domain generates are yours to share with whom you choose. Because the user IDs generated are site specific, there is no degradation of these IDs over time, improving user match rates.  Additionally, latency issues generally caused by multiple call outs to various parties are significantly reduced, improving user experience, viewability and earnings.
+SharedId (FKA PubCID) is a privacy centric first party cookie solution. Built with consumer privacy in mind. SharedId does not sync IDs across domains so the IDs your domain generates are yours to share with whom you choose. Because the user IDs generated are site specific, there is no degradation of these IDs over time, improving user match rates.  Additionally, latency issues generally caused by multiple call outs to various parties are significantly reduced, improving user experience, viewability and earnings.
 
-Publishers that have implemented PubCID have seen an immediate lift in earnings and improvement in user interaction on their domain. This solution is open source, free to use, and does not require any consortium memberships.
+Publishers that have implemented SharedId have seen an immediate lift in earnings and improvement in user interaction on their domain. This solution is open source, free to use, and does not require any consortium memberships.
 
 ## How It Works
 
