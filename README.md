@@ -9,9 +9,9 @@ Publishers that have implemented PubCID have seen an immediate lift in earnings 
 
 ## How It Works
 
-The pubcid.js script generates a v4 UUID locally when a new user visits the website and saves it locally.  By default the id is saved in the browser's local storage, but it can also be configured to use cookies instead.  
+The pubcid.js script generates a v4 UUID when a new user visits the website and saves it locally.  By default the id is saved in the browser's local storage, but it can also be configured to use cookies instead.  
 
-Javascripts that supports Publisher Common ID will look for window.PublisherCommonId object and call the getId() method to obtain the id.  
+Javascripts that supports Publisher Common ID should look for window.PublisherCommonId object and call the getId() method to obtain the id.  
 
 ## Install
     $ npm install
@@ -86,3 +86,65 @@ Server creates cookie once and let it expires before creating again.
         create: false,
         extend: false
     }
+
+## Usage
+
+Load script and read the pubcid.  Consent checking takes place during script initialization.  If there is consent, then a pubcid is generated and stored in the browser if there isn't one already.  
+
+```html
+<script src="//myserver.com/pubcid.min.js"></script>
+<script>
+    var pubcid = PublisherCommondId.getId();
+    console.log(pubcid); // ex: f9e17bd4-4bda-4c2e-a656-6468ae2a61c2
+</script>
+```
+
+Alternatively getIdWithConsent can be used which will check consent again during reading.  A callback function is required.
+
+```html
+<script src="//myserver.com/pubcid.min.js"></script>
+<script>
+    PublisherCommondId.getIdWithConsent(
+        function(pubcid) {
+            console.log(pubcid); // ex: f9e17bd4-4bda-4c2e-a656-6468ae2a61c2
+        }
+    );
+</script>
+```
+
+Async queueing is also supported.  The parameter is an array where the first item is the method name, followed by the rest of parameters.
+
+```html
+<script>
+    var PublisherCommonId = PublisherCommonId || {};
+    PublisherCommonId.que = PublisherCommonId.que || [];
+</script>
+<script src="//myserver.com/pubcid.min.js" async></script>
+<script>
+    var callback = function(pubcid) {
+        console.log(pubcid); // ex: f9e17bd4-4bda-4c2e-a656-6468ae2a61c2
+    };
+    
+    PublisherCommondId.que.push(['getIdWithConsent', callback]);
+</script>
+```
+
+Queueing a function
+
+```html
+<script>
+    var PublisherCommonId = PublisherCommonId || {};
+    PublisherCommonId.que = PublisherCommonId.que || [];
+</script>
+<script src="//myserver.com/pubcid.min.js" async></script>
+<script>
+    var test = function() {
+        var pubcid = PublisherCommonId.getId();
+        console.log(pubcid); // ex: f9e17bd4-4bda-4c2e-a656-6468ae2a61c2
+    };
+    
+    PublisherCommondId.que.push(test);
+</script>
+```
+
+See available methods in [pubcidModule.js](src/lib/pubcidModule.js).
