@@ -3,6 +3,10 @@ Notable changes to the project
 
 ## [Unreleased]
 
+## [1.5.1] - 2022-03-30
+### Added
+- Export additional storage-utility functions
+
 ## [1.5.0] - 2022-03-28
 ### Added
 - spdx header to identify version and license in pubcid.min.js
