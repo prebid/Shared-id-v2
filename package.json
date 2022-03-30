@@ -1,6 +1,6 @@
 {
   "name": "pubcid",
-  "version": "1.5.1-snapshot.0",
+  "version": "1.5.1",
   "description": "Publisher Common ID",
   "scripts": {
     "lint": "eslint src/**/*.js",
