@@ -2,8 +2,20 @@
 Notable changes to the project
 
 ## [Unreleased]
-## [1.4.1] - 2021-5-24
+
+## [1.5.1] - 2022-03-30
+### Added
+- Export additional storage-utility functions
+
+## [1.5.0] - 2022-03-28
+### Added
+- spdx header to identify version and license in pubcid.min.js
+- async callback support for api
+
+## [1.4.1] - 2021-05-24
+### Changed
 - Updated consenthandler to keep listening for updates
+
 ## [1.4.0] - 2020-12-1
 ### Changed
 - Remove CMP v1 support
