@@ -657,4 +657,86 @@ describe('PubcidHandler', ()=> {
             expect(domain).to.be.undefined;
         });
     });
+
+    describe('deletePubcid', ()=> {
+        let deleteStub;
+        before(()=>{
+            deleteStub = sinon.stub(storageUtils, 'deleteValue');
+            clearAll();
+        });
+
+        after(()=>{
+            deleteStub.restore();
+        })
+
+        beforeEach(() => {
+            deleteStub.resetHistory();
+        });
+
+        afterEach(() => {
+            clearAll();
+        });
+
+        it('delete Cookie From Config', ()=>{
+            const expectedDomain = 'hello.cookie';
+            const expectedPubcidName = '_foobar';
+            const options = {cookieDomain: expectedDomain, name: expectedPubcidName, type: COOKIE};
+            const handler = new PubcidHandler(options);
+            expect(deleteStub).to.have.not.been.called;
+            handler.deletePubcid({all: false});
+            expect(deleteStub).to.have.been.calledOnceWith(COOKIE, expectedPubcidName, expectedDomain)
+        });
+
+        it('delete Cookie From Cached Domain', ()=>{
+            const expectedDomain = undefined;
+            const cachedDomain = 'foobar.com';
+            const expectedPubcidName = '_foobar';
+            const options = {cookieDomain: expectedDomain, name: expectedPubcidName, type: COOKIE};
+            const handler = new PubcidHandler(options);
+            handler.cachedDomain = cachedDomain;
+            expect(deleteStub).to.have.not.been.called;
+            handler.deletePubcid({all: false});
+            expect(deleteStub).to.have.been.calledOnceWith(COOKIE, expectedPubcidName, cachedDomain)
+        });
+
+        it('delete Cookie From Hostname', ()=>{
+            const expectedDomain = undefined;
+            const expectedPubcidName = '_foobar';
+            const options = {cookieDomain: expectedDomain, name: expectedPubcidName, type: COOKIE};
+            const handler = new PubcidHandler(options);
+
+            let getHostnameStub = sinon.stub(handler, 'getHostname').returns("foo.bar.baz");
+
+            expect(deleteStub).to.have.not.been.called;
+            handler.deletePubcid({all: false});
+            sinon.assert.callCount(deleteStub, 3);
+            expect(deleteStub).to.have.been.calledWith(COOKIE, expectedPubcidName, "foo.bar.baz");
+            expect(deleteStub).to.have.been.calledWith(COOKIE, expectedPubcidName, "bar.baz");
+            expect(deleteStub).to.have.been.calledWith(COOKIE, expectedPubcidName, "baz");
+
+            getHostnameStub.restore();
+        });
+
+        it('delete Pubcid from Local Storage', ()=>{
+            const expectedDomain = "foobar.com";
+            const expectedPubcidName = '_foobar';
+            const options = {cookieDomain: expectedDomain, name: expectedPubcidName, type: LOCAL_STORAGE};
+            const handler = new PubcidHandler(options);
+            expect(deleteStub).to.have.not.been.called;
+            handler.deletePubcid({all: false});
+            expect(deleteStub).to.have.been.calledOnceWith(LOCAL_STORAGE, expectedPubcidName, '');
+        });
+
+        it('delete Pubcid from All', ()=>{
+            const expectedDomain = "foobar.com";
+            const expectedPubcidName = '_foobar';
+            const options = {cookieDomain: expectedDomain, name: expectedPubcidName, type: LOCAL_STORAGE};
+            const handler = new PubcidHandler(options);
+            expect(deleteStub).to.have.not.been.called;
+            handler.deletePubcid();
+            sinon.assert.callCount(deleteStub, 2);
+            expect(deleteStub).to.have.been.calledWith(COOKIE, expectedPubcidName, expectedDomain)
+            expect(deleteStub).to.have.been.calledWith(LOCAL_STORAGE, expectedPubcidName, '');
+        });
+    });
 });
