@@ -4,6 +4,7 @@ Notable changes to the project
 ## [1.5.1] - 2022-08-09
 ### Added
 - Export additional storage-utility functions
+- When consent is not given don't write cookies while trying to find the root
 
 ## [1.5.0] - 2022-03-28
 ### Added

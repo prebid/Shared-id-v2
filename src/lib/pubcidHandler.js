@@ -85,7 +85,7 @@ export default class PubcidHandler {
 
     /**
      * Create/Extend pubcid if there is consent.  Delete pubcid if there isn't.
-     * @param {function} callback This function is passed pubcid value after consent check.
+     * @param {function} [callback] This function is passed pubcid value after consent check.
      */
     updatePubcidWithConsent(callback) {
         this.hasConsent((consent) => {
@@ -157,11 +157,24 @@ export default class PubcidHandler {
      */
     deletePubcid({all = true} = {}) {
         const {name} = this.config;
-        if (all) {
-            deleteValue(COOKIE, name, this.getDomain(COOKIE));
-            deleteValue(LOCAL_STORAGE, name, this.getDomain(LOCAL_STORAGE));
-        } else {
-            deleteValue(this.typeEnabled, name);
+        if (all || this.typeEnabled == COOKIE) {
+            //Don't call getDomain as it may write out temp cookies so copy getDomain functionality here
+            if (this.config.cookieDomain !== undefined) {
+                deleteValue(COOKIE, name, this.config.cookieDomain);
+            } else if (this.cachedDomain !== undefined) {
+                deleteValue(COOKIE, name, this.cachedDomain);
+            } else {
+                //Just attempt to delete any cookie matching name and domain, don't care about success
+                const parts = this.getHostname().split('.');
+                for (let i = 0, len = parts.length; i < len; ++i) {
+                    const currDomain = parts.slice(i).join('.');
+                    deleteValue(COOKIE, name, currDomain);
+                }
+            }
+        }
+
+        if (all || this.typeEnabled == LOCAL_STORAGE) {
+            deleteValue(LOCAL_STORAGE, name, ''); //domain doesn't do anything for LOCAL_STORAGE
         }
     }
 
@@ -192,9 +205,18 @@ export default class PubcidHandler {
                 return this.cachedDomain
             }
             else {
-                this.cachedDomain = extractDomain(document.location.hostname);
+                this.cachedDomain = extractDomain(this.getHostname());
                 return this.cachedDomain;
             }
         }
+    }
+
+    /**
+     * Wrapper for global value of document.location.hostname
+     * allows for easier unit testing to mock hostname.
+     * @returns {String} document.location.hostname
+     */
+    getHostname(){
+        return document.location.hostname;
     }
 }
