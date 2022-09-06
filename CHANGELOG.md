@@ -2,6 +2,9 @@
 Notable changes to the project
 
 ## [Unreleased]
+## [1.5.2] - 2022-09-6
+### Changed
+- When consent is not given don't write cookies
 
 ## [1.5.1] - 2022-03-30
 ### Added
