@@ -7,7 +7,7 @@ const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 const pkg = require('./package.json');
-const spdx_banner = `pubcid.js ${pkg.version} - https://github.com/conversant/pubcid.js\nSPDX-License-Identifier: Apache-2.0`
+const spdx_banner = `pubcid.js ${pkg.version} - https://github.com/prebid/Shared-id-v2/\enSPDX-License-Identifier: Apache-2.0`
 
 module.exports = (env = {}, args = {}) => {
     const mode = args.mode;
