@@ -1,6 +1,6 @@
 {
   "name": "pubcid",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Publisher Common ID",
   "scripts": {
     "lint": "eslint src/**/*.js",
@@ -28,7 +28,7 @@
     "chai": "^4.2.0",
     "clean-webpack-plugin": "^3.0.0",
     "core-js": "^3.6.5",
-    "eslint": "^5.16.0",
+    "eslint": "^6.0.0",
     "html-webpack-exclude-assets-plugin": "0.0.7",
     "html-webpack-plugin": "^3.2.0",
     "karma": "^4.4.1",
