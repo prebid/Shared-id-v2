@@ -95,7 +95,7 @@ export function copyOptions(dst, src) {
     if (dst && src) {
         Object.keys(src).forEach((key) => {
             const val = src[key];
-            if (typeof val !== 'undefined' && dst.hasOwnProperty(key)) {
+            if (typeof val !== 'undefined' && Object.prototype.hasOwnProperty.call(dst, key)) {
                 dst[key] = val;
             }
         });
