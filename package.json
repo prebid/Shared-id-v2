@@ -55,8 +55,5 @@
     "loglevel-plugin-prefix": "^0.8.4"
   },
   "main": "dist/index.js",
-  "module": "src/index.js",
-  "publishConfig": {
-    "registry": "http://vault.cnvrmedia.net/nexus/content/repositories/npm-internal/"
-  }
+  "module": "src/index.js"
 }
