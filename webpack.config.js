@@ -2,13 +2,13 @@
 
 const Webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const HtmlWebpackExcludeAssetsPlugin = require('html-webpack-exclude-assets-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 const pkg = require('./package.json');
 const spdx_banner = `pubcid.js ${pkg.version} - https://github.com/prebid/Shared-id-v2/\nSPDX-License-Identifier: Apache-2.0`
 
+// eslint-disable-next-line no-unused-vars
 module.exports = (env = {}, args = {}) => {
     const mode = args.mode;
     const mapType = (mode === 'production') ? 'hidden-source-map' : 'inline-source-map';
@@ -21,37 +21,49 @@ module.exports = (env = {}, args = {}) => {
 
     const scriptConfig = {
         mode: mode,
+        target: ['web', 'es5'],
         entry: {
             'pubcid.min': './src/pubcid.js'
         },
         output: {
             filename: '[name].js',
-            path: __dirname + '/dist'
-        }
-        ,
+            path: __dirname + '/dist',
+            environment: {
+                arrowFunction: false
+            }
+        },
+        resolve: {
+            fallback: {
+                "util": false
+            }
+        },
         module: {
             rules: [
                 {
-                    test: /\.js$/,
-                    exclude: /node_modules/,
+                    test: /\.m?js$/,
+                    exclude: {
+                        and: [/node_modules/],
+                        not: [/deep-eql/]
+                    },
                     use: {
                         loader: 'babel-loader',
                         options: {
+                            // sourceType: 'unambiguous',
                             // Transform to commonjs modules so sinon spies can work in unit tests
-                            presets: [['@babel/preset-env', {modules: 'cjs'}]],
+                            presets: [['@babel/preset-env', {modules: 'commonjs', useBuiltIns: false, debug: false}]],
 
                             plugins: [
-                                ['@babel/plugin-transform-runtime', { corejs: 3 }],
+                                ['@babel/plugin-transform-runtime', { corejs: 3, absoluteRuntime: true, version: '7.28.0'}],
                             ],
                         },
                     }
-                }
+                },
             ]
         },
         plugins: [
             new CleanWebpackPlugin(
-                // Only clean up files related to scripts before build
-                {cleanOnceBeforeBuildPatterns: ['pubcid.*', 'stats.json']}
+                // Only clean up files related to the script before build
+                {cleanOnceBeforeBuildPatterns: ['pubcid.*', 'stats.json', '*.*.js', '!index.*']}
             ),
             new Webpack.BannerPlugin({
                 banner: spdx_banner,
@@ -77,7 +89,7 @@ module.exports = (env = {}, args = {}) => {
         module: {
             rules: [
                 {
-                    test: /\.(js)$/,
+                    test: /\.m?js$/,
                     exclude: /node_modules/,
                     use: {
                         loader: 'babel-loader',
@@ -93,7 +105,7 @@ module.exports = (env = {}, args = {}) => {
         },
         plugins: [
             new CleanWebpackPlugin(
-                // Only clean up files related to library before build
+                // Only clean up files related to the library before build
                 {cleanOnceBeforeBuildPatterns: ['index.*']}
             ),
             new Webpack.BannerPlugin({
@@ -110,10 +122,8 @@ module.exports = (env = {}, args = {}) => {
         scriptConfig.plugins.push(
             new HtmlWebpackPlugin({
                 filename: 'pubcid.html',
-                template: 'src/pubcid.html',
-                excludeAssets: [/index.js/]
-            }),
-            new HtmlWebpackExcludeAssetsPlugin()
+                template: 'src/pubcid.html'
+            })
         );
     }
     else {
