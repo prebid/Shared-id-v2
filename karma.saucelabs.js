@@ -27,13 +27,12 @@ module.exports = function(config) {
         },
 
         browsers: Object.keys(browsers),
-        //browsers: ['sl_ie_11_windows_10'],
-        //browsers: ['sl_chrome_66_windows_10'],
         customLaunchers: browsers,
-        //browserDisconnectTimeout: 10000, // default 2000
+        browserDisconnectTimeout: 10000, // default 2000
         browserDisconnectTolerance: 1, // default 0
-        //browserNoActivityTimeout:  4 * 60 * 1000, // default 10000
+        browserNoActivityTimeout:  4 * 60 * 1000, // default 10000
         captureTimeout: 4 * 60 * 1000, // default 60000
-        singleRun: true
+        concurrency: 2,
+        singleRun: true,
     });
 };

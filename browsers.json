@@ -11,17 +11,17 @@
     "platform": "Windows 10",
     "version": "66.0"
   },
-  "sl_safari_11_mac_high_sierra": {
+  "sl_safari_14_mac_big_sur": {
     "base": "SauceLabs",
     "browserName": "safari",
-    "platform": "macOS 10.13",
-    "version": "11.1"
+    "platform": "macOS 11",
+    "version": "14"
   },
-  "sl_safari_12_mac_mojave": {
+  "sl_safari_17_mac_ventura": {
     "base": "SauceLabs",
     "browserName": "safari",
-    "platform": "macOS 10.14",
-    "version": "12.0"
+    "platform": "macOS 13",
+    "version": "17"
   },
   "sl_edge_16_windows_10": {
     "base": "SauceLabs",
@@ -29,18 +29,26 @@
     "platform": "Windows 10",
     "version": "16.16299"
   },
+  "sl_edge_80_windows_10": {
+    "base": "SauceLabs",
+    "browserName": "MicrosoftEdge",
+    "platform": "Windows 10",
+    "version": "80.0"
+  },
   "sl_chrome_66_windows_10": {
     "base": "SauceLabs",
     "browserName": "chrome",
     "platform": "Windows 10",
     "version": "66.0"
   },
-  "sl_safari_ios_12": {
+  "sl_safari_ios_14": {
     "base": "SauceLabs",
     "browserName": "Safari",
-    "platform": "iOS",
-    "version": "12.2",
-    "deviceName": "iPhone 7 Simulator"
+    "platformName": "iOS",
+    "platformVersion": "14",
+    "deviceName": "iPhone Simulator",
+    "appiumVersion": "1.22.3",
+    "deviceOrientation": "portrait"
   },
   "sl_chrome_android_7": {
     "base": "SauceLabs",
@@ -48,6 +56,7 @@
     "platform": "Android",
     "version": "7.0",
     "deviceOrientation": "portrait",
+    "appiumVersion": "1.22.3",
     "deviceName": "Samsung Galaxy S7 GoogleAPI Emulator"
   }
 }
