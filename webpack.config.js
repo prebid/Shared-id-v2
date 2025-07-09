@@ -4,6 +4,7 @@ const Webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const TerserPlugin = require('terser-webpack-plugin');
 
 const pkg = require('./package.json');
 const spdx_banner = `pubcid.js ${pkg.version} - https://github.com/prebid/Shared-id-v2/\nSPDX-License-Identifier: Apache-2.0`
@@ -60,10 +61,15 @@ module.exports = (env = {}, args = {}) => {
                 },
             ]
         },
+        optimization: {
+            minimizer: [new TerserPlugin({
+                extractComments: false,
+            })],
+        },
         plugins: [
             new CleanWebpackPlugin(
                 // Only clean up files related to the script before build
-                {cleanOnceBeforeBuildPatterns: ['pubcid.*', 'stats.json', '*.*.js', '!index.*']}
+                {cleanOnceBeforeBuildPatterns: ['**/*', '!index.*']}
             ),
             new Webpack.BannerPlugin({
                 banner: spdx_banner,
@@ -102,6 +108,11 @@ module.exports = (env = {}, args = {}) => {
                     }
                 },
             ],
+        },
+        optimization: {
+            minimizer: [new TerserPlugin({
+                extractComments: false,
+            })],
         },
         plugins: [
             new CleanWebpackPlugin(
