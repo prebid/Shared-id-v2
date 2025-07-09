@@ -60,6 +60,7 @@
     "LICENSE",
     "README.md",
     "src",
-    "dist"
+    "dist",
+    "!dist/stats.json"
   ]
 }
